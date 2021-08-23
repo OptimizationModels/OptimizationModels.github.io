@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>1. Preface &#8212; OptimizationModels 0.8 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script>window.MathJax = "{'tex': { 'macros': {RR: '{\\bf R}', R: '{\\mathbb{R}}', bold: ['{\\bf #1}', 1] }, 'environments': {braced: ['\\left\\{', '\\right\\}'] }, 'inlineMath': [['$', '$'], ['\\(', '\\)']] } }"</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="2. Linear Optimization Models" href="LinearModels.html" />
+    <link rel="prev" title="Optimization Models" href="index.html" />
+<link rel="stylesheet" type="text/css" 
+     href="_static/custom.css" /> 
+
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <p class="hidden"><span class="math notranslate nohighlight">\(\newcommand{\R}{{\mathbb{R}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\Z}{{\mathbb{Z}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\N}{{\mathbb{N}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\var}[1]{{\color{red}{\mathbf{#1}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\param}[1]{{\color{blue}{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathsc}[1]{{\normalfont\textsc{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\def\sc#1{\dosc#1\csod}\)</span>
+<span class="math notranslate nohighlight">\(\def\dosc#1#2\csod{{\rm{#1{\rm\small #2}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\set}[1]{{\sc#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathvar}[1]{\var{#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\half}{{\small{\frac{1}{2}}}}\)</span></p>
+<section id="preface">
+<h1><span class="section-number">1. </span>Preface<a class="headerlink" href="#preface" title="Permalink to this headline">¶</a></h1>
+<p>This volume was born several years ago in Italian, and was the main
+material for an advanced course on optimization modeling for student
+in management engineering at my Università deli Studi di Firenze. The
+course is no more active and also the publisher of that book is no
+more active, so that material remained unused for quite  a few
+years. I decided now to reconsider it as I think that in these days
+modeling skills are fundamental, even more than before. Differently
+from when I wrote my italian book, nowadays data, data science, analytics
+are terms we can find everywhere.  Every company is moving towards
+data-oriented approaches, mainly following the giant waves of machine
+learning and artificial intelligence.  However, some companies are
+experiencing difficulties, as the return on investment seems to be
+below expectations. I have neither an explanation nor a recipe for
+this. But I suspect the reasons might be many: from one side the too
+high expectations, but, from another side, the fact that mangaers
+forgot that most of modern data science and machine learning is devoted
+to predictive analytics. And this is indeed very good: having the
+possibility of learning from data so that future (demand, production,
+yield, interest rates, …) can be reliably and robustly forecast is
+wonderful. However, after a reliable forecast is available, managers
+still need to take decisions. And this is where optimization
+(operations research) comes into play. We have been teaching all
+possible methods and theoretical aspects of optimization. However I
+feel there is still a wide gap which separates academic research from
+day to day practical implementation. And, in my opinion, part of this
+is due to the lack of sufficient modeling skills. If we cannot model
+a problem, no natter how sophisticated our optimization algorithm are,
+we will not be able to solve any problem. We need to communicate our
+problem to a solver. And to do this we need a deep knowledge of
+models.</p>
+<p>Modeling is  a creative skill, which is best learned by doing;
+however, especially for more advance models involving integer
+variables, modeling practice should be paired by a deep theoretical
+knowledge, if we wish to solve large scale problems.</p>
+<p>My interest in modeling arose by chance many years ago, thanks to a
+stimulating activity of book reviewer I did in my early years in the
+academia. Among the many books I received, I got to review, at some time, the
+fundamental book of Hans Paul Williams <span id="id1">[<a class="reference internal" href="Bibliography.html#id26"><span>24</span></a>]</span> (indeeed it
+was a much earlier edition than the one cited here). That book opened
+a new world to me: up to that time I had been thinking to the
+algorithmic aspects of optimization as the most relevant ones. But
+that book made me understand that without suitable formulation no
+problem can ever be solved, whichever the refined algorithms you have
+available. This seemingly trivial observation has indeed many
+consequences. One of these is the fact that we need to be organized
+and disciplined in formulating an optimization model; modeling can be
+somewhat confronted with jazz music: it is true that the essence of
+jazz is improvisation, but  improvisation is something you can master
+only after a long period of study and practice. The same for modeling:
+formulating a linear optimization model is not something which can be
+done simply after having learnt the details of the simplex algorithm:
+practice and modeling theory is needed before a robust, reliable,
+useful model can be produced. Williams’ book opened my eyes on this
+fascinating subject; more or less at the same time I also had the
+opportunity of learning and using <a class="reference external" href="https://www.gams.com/">GAMS</a> - Generalized Algebraic
+Modeling System. This modeling tool let
+me understand that even to formulate a “simple” linear optimization
+problem it is not enough to be able to write the cost vector, the
+constraint matrix, the right hand side. Or, more precisely, yes it
+would be enough. But the effort in preparing these data can be
+enormously reduced if a modeling language is used. This is even more
+true when dealing with non linear models. GAMS is nowadays
+not the unique modeling system  available today. I have been using
+<a class="reference external" href="https://www.ampl.com">AMPL</a> - A Mathematical Programming Language,
+<a class="reference external" href="https://www.aimms.com/">AIMMS</a>,
+all of which are commercial products, or <a class="reference external" href="https://jump.dev/">JuMP</a> (Julia Mathematical
+Programming)  and <a class="reference external" href="http://www.pyomo.org/">Pyomo</a> (Python Optimization
+Modeling) which are open source.  There
+are many others, most of which however are limited to specific classes
+of problems like, e.g., linear models only.</p>
+<p>One may ask then why I felt the need to write a book on optimization
+modeling.  First of all, of course, I confess I like writing and
+teaching and this is something I would do even if useless…
+But, also, I think that it is quite unusual that for such an important
+topic the most authorative textbook is still the excellent book by
+Williams which although re-published several times, is more or less
+unchanged since the 80’s, when the first edition appeared. I think
+there is a space nowadays for a more modern view of that classical
+textbook, which is and remains a fundamental reference for me as well
+as many in the optimization community. But in these years many things
+happened: advances in software, in modeling environments, in
+programming languages, in application domains. And, among the many
+novelties, also the way in which we publish radically changed.
+I took the decision to publish my book as a web site, with a companion
+github repo for models and data. The idea is that of a dynamic book,
+which can easily change thanks to the addition of models, data,
+modeling languages. For many different reasons, I became more used to
+the AMPL language than any other. But I would like to ask my readers
+to contribute with translations of my AMPL models in other modeling
+environments (and, of course, to suggest modification and corrections
+to those I wrote). There will be also printed editions of this book,
+for those who prefer having a book on paper,    but the on line web
+edition will in any case be the preferred one.</p>
+<p>In writing this book I also decided, for the first time in my academic
+life, not to write a book
+(or a paper) in LaTeX from beginning to end. It was a difficult
+choice, as I cannot thin of any other way to write on math. But modern
+markup languages, like Sphinx, make the effort in writing a web book
+so light that eventually I decided to use this system. Of course,
+however, all of the mathematical formulae and the figures have been
+composed in LaTex, with the help of the tikz package.</p>
+<p><a class="reference external" href="https://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="CreativeCommonsLicence" src="_images/Cc-by-nc-nd_icon.svg.png" /></a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Optimization Models</a></li>
+      <li>Next: <a href="LinearModels.html" title="next chapter"><span class="section-number">2. </span>Linear Optimization Models</a></li>
+  </ul></li>
+</ul>
+</div>
+<h3><a href="index.html">Table of Contents</a></h3>
+<p class="caption"><span class="caption-text">Table of Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Preface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LinearModels.html">2. Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ProductMixProblems.html">3. Product Mix Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BlendingModels.html">4. Blending Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPeriodModels.html">5. Multi Period Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NetworkFlow.html">6. Network flow models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ShortestPath.html">7. Shortest (Minimum Cost) Path Problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MaximumFlow.html">8. Maximum Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transportation.html">9. The transportation model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Assignment.html">10. Assignment or bi-partite matching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dynamic.html">11. Dynamic flows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html">12. Objectives and constraints in optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html#some-nonlinear-problems-that-can-be-transformed-into-linear-ones">13. Some nonlinear problems that can be transformed into linear ones</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Constraints.html">14. Constraints in linear optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StochasticOptimization.html">15. Uncertainty modeling: Stochastic optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MIPModels.html">16. Mixed Integer Linear Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StructuredMIPmodels.html">17. Structured Mixed Integer Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html">18. Knapsack problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#multiple-knapsack-models-bin-packing-cutting-stock">19. Multiple knapsack models, Bin Packing, Cutting Stock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#bin-packing-container-optimization">20. Bin packing -  container optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#plant-location">21. Plant location</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SetCovering.html">22. Set covering, packing, partition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TravelingSalesPerson.html">23. Sequencing problems: the Traveling Salesperson Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quadratic.html">24. Quadratic Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">25. To do</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Bibliography.html">26. Bibliographic References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Version.html">27. Version history</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/OptimizationModels.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Fabio Schoen,  Creative Commons Cc-by-nc-nd.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/OptimizationModels.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

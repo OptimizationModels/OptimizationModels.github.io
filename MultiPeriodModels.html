@@ -1,0 +1,1267 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>5. Multi Period Models &#8212; OptimizationModels 0.8 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/tabs.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script>window.MathJax = "{'tex': { 'macros': {RR: '{\\bf R}', R: '{\\mathbb{R}}', bold: ['{\\bf #1}', 1] }, 'environments': {braced: ['\\left\\{', '\\right\\}'] }, 'inlineMath': [['$', '$'], ['\\(', '\\)']] } }"</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="6. Network flow models" href="NetworkFlow.html" />
+    <link rel="prev" title="4. Blending Models" href="BlendingModels.html" />
+<link rel="stylesheet" type="text/css" 
+     href="_static/custom.css" /> 
+
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <p class="hidden"><span class="math notranslate nohighlight">\(\newcommand{\R}{{\mathbb{R}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\Z}{{\mathbb{Z}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\N}{{\mathbb{N}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\var}[1]{{\color{red}{\mathbf{#1}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\param}[1]{{\color{blue}{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathsc}[1]{{\normalfont\textsc{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\def\sc#1{\dosc#1\csod}\)</span>
+<span class="math notranslate nohighlight">\(\def\dosc#1#2\csod{{\rm{#1{\rm\small #2}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\set}[1]{{\sc#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathvar}[1]{\var{#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\half}{{\small{\frac{1}{2}}}}\)</span></p>
+<section id="multi-period-models">
+<span id="section-multi-prod"></span><h1><span class="section-number">5. </span>Multi Period Models<a class="headerlink" href="#multi-period-models" title="Permalink to this headline">¶</a></h1>
+<p>Simple modes, like blending and product mix, form the basis for more
+complex model with wider applicability. Often those “static” models
+are turned into dynamic ones, by adding a temporal index to the main
+variables (how much to buy, to produce, to blend at each time period). Of course a simple
+replication of the same model over a time horizon is neither
+interesting nor challenging
+as, given the same data, its optimal solution will be the same for
+every period and there will be no dynamics in the model. What makes
+multi-period models interesting, as well as more computationally
+challenging as their size grows, is the set of constraints which
+link decisions taken in one period with decisions to be taken in
+different ones.  In the following some examples will be presented.</p>
+<dl class="field-list">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-0"></span>Purchase planning for a canteen</p>
+<p>A fairly immediate generalization of the diet problem
+concerns purchase planning  for multiple periods. In planning  menus
+for multiple time periods,
+nutritional requirements can be guaranteed
+over a long time periods, like a week,
+through the  standard model. However, decisions made on a certain day might
+influence decisions for other  days. Consider, as an example,
+the total iron present in the diet: instead of imposing
+that at least 100% of the daily requirement is satisfied every
+day, it might be possible to allow each single day to provide less, say
+at least 60% of the daily requirement, with a constraint  imposing to
+reach the correct total requirement,
+equal to 700% of the daily one, in a whole week. That is, letting <span class="math notranslate nohighlight">\(t\)</span>
+be the index associated to each day, and with <span class="math notranslate nohighlight">\(\var{Fe}_t\)</span>
+the quantity  of iron in the diet of day <span class="math notranslate nohighlight">\(t\)</span>,
+the daily constraint would take the form</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{Fe}_t &amp; \geq 60 &amp; \forall \, t
+\end{align*}</div><p>while the weekly request could be expressed as</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_{t = 1}^T \var{Fe}_t \geq T \cdot 100
+\end{align*}</div><p>(where, in the case of a week, <span class="math notranslate nohighlight">\(T = 7\)</span>).
+This way  a link is introduced among decisions taken in different
+days.</p>
+<p>Another example of a multi-period model in
+menu planning arises when  quantity discounts are taken into account.
+Without considering now how to model  piecewise linear cost
+functions, consider now the simple situation in which in some days
+prime material costs are lower than
+in others.</p>
+<p>In these cases, in order to profit from lower costs in specific
+periods, it becomes necessary to distinguish between what is purchased
+every day and what is actually used for each day’s menu.
+When there is a difference between purchase and usage, this difference
+goes into an inventory and becomes available for the following periods.</p>
+<p>In particular, denote by <span class="math notranslate nohighlight">\(\var{Buy}_t, \var{Use}_t,
+\var{s}_t\)</span>
+respectively the variables that
+indicate, for a given food, the quantity purchased at the end  of
+period <span class="math notranslate nohighlight">\(t\)</span>, the quantity used for preparing meals
+required in the period and the quantity available in  the inventory
+at the end of the preceding period. The
+<span class="target" id="index-1"></span>inventory balance equation is the following:</p>
+<div class="math notranslate nohighlight" id="inventorybalance">
+\begin{align*}
+\var{Buy}_t + \var{s}_{t-1} = \var{Use}_t + \var{s}_t.
+\end{align*}</div><p>This constraint can be seen as a balance between inputs, or
+availability at the beginning of period <span class="math notranslate nohighlight">\(t\)</span> and outputs from the same periods.
+The following figure gives a
+graphical representation of this temporal link – later in this volume
+this will be recognized as a <span class="target" id="index-2"></span>network flow model:</p>
+<div class="figure" style="text-align: center">
+<p><img  src="_images/tikz-aebb845cc83c3640c3f4b57a36b4b81e2caf5607.png" alt="Figure made with TikZ" /></p>
+</div><p>The   <a class="reference internal" href="#inventorybalance"><span class="std std-ref">inventory balance equation</span></a> creates a link between the
+decisions made in period  <span class="math notranslate nohighlight">\(t\)</span>  and those that will be made in
+period <span class="math notranslate nohighlight">\(t + 1\)</span>.</p>
+<p>The following model represents a possible schema.</p>
+<dl class="field-list simple">
+<dt class="field-odd">model</dt>
+<dd class="field-odd"><p>Multiperiod menu planning</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Sets:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><p><span class="math notranslate nohighlight">\(\set{Foods}\)</span>:  set of available foods
+<span class="math notranslate nohighlight">\(\set{Qual}\)</span>:  qualities to be kept under control</p>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Parameters:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><p><span class="math notranslate nohighlight">\(\param{T}\)</span>: the time horizon;</p>
+<p><span class="math notranslate nohighlight">\(\param{Cost}_j^t\)</span>: unit cost of food <span class="math notranslate nohighlight">\(j \in \set{Food}\)</span>
+in period <span class="math notranslate nohighlight">\(t\)</span></p>
+<p><span class="math notranslate nohighlight">\(\param{Hold}_{jt}\)</span>: unit inventory cost, to be paid
+for each unit of food <span class="math notranslate nohighlight">\(j\)</span> stored at the end of period <span class="math notranslate nohighlight">\(t\)</span></p>
+<p><span class="math notranslate nohighlight">\(\param{MinQual}_i, \param{MaxQual}_i\)</span>: minimum and
+maximum allowed for
+qualitative element <span class="math notranslate nohighlight">\(i \in \set{Qual}\)</span> in each period;</p>
+<p><span class="math notranslate nohighlight">\(\param{TotMinQual}_i, \param{TotMaxQual}_i\)</span>: minimum and
+maximum requests for  element <span class="math notranslate nohighlight">\(i\)</span> over the entire
+period <span class="math notranslate nohighlight">\(1,\ldots, \param{T}\)</span>;</p>
+<p><span class="math notranslate nohighlight">\(\param{Q}_{ij}\)</span>: quantity  of nutrient <span class="math notranslate nohighlight">\(i \in \set{Qual}\)</span>
+contained in one unit of food <span class="math notranslate nohighlight">\(j \in \set{Foods}\)</span>;</p>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Variables:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><p><span class="math notranslate nohighlight">\(\var{Buy}_{jt}\)</span>: quantity of food <span class="math notranslate nohighlight">\(j \in \set{Foods}\)</span>
+to be purchased at the beginning of period <span class="math notranslate nohighlight">\(t\)</span>;</p>
+<p><span class="math notranslate nohighlight">\(\var{Use}_{jt}\)</span>: quantity of of food <span class="math notranslate nohighlight">\(j\)</span> to be used for
+the meals of period <span class="math notranslate nohighlight">\(t\)</span>;</p>
+<p><span class="math notranslate nohighlight">\(\var{s}_{jt}\)</span> quantity of food <span class="math notranslate nohighlight">\(j\)</span>  in the inventory
+at the end of period <span class="math notranslate nohighlight">\(t\)</span>;</p>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Constraints:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><p>Daily diet quality:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\param{MinQual}_i \leq \sum_{j \in \set{Food}} \param{Q}_{ij} \var{Use}_{jt} &amp; \leq
+\param{MaxQual}_i &amp; \forall \, i &amp; \in \set{Qual}, \forall\,t
+\end{align*}</div><p>Diet quality in the planning period:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\param{TotMinQual}_i \leq \sum_{j \in \set{Food}} \param{Q}_{ij}
+\sum_{t=1}^T \var{Use}_{jt} &amp; \leq \param{TotMaxQual}_i
+&amp; \forall \, i &amp; \in \set{Qual}
+\end{align*}</div></div></blockquote>
+<p>Inventory balance:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{Buy}_{jt} + \var{s}_{jt-1} &amp; =
+\var{Use}_{jt} + \var{s}_{jt} &amp; \forall \, j &amp; \in \set{Food},
+t \in 1,\ldots,T
+\end{align*}</div><p>Non negativity:</p>
+<div class="math notranslate nohighlight">
+\[
+\var{Use}_{jt}, \var{Buy}_{jt}, \var{s}_{jt} \geq 0
+\]</div><p>Observe, in particular, the  non-negativity constraint of the
+inventory: from the inventory balance equation it immediately
+follows  that</p>
+<div class="math notranslate nohighlight">
+\[
+\var{Buy}_{jt} + \var{s}_{jt}  \geq \var{Use}_{jt}
+\]</div><p>thus everything needed for day <span class="math notranslate nohighlight">\(t\)</span>  is always already available at
+the beginning of the period, either form newly bought food or from
+the inventory. Thus, non negativity of the inventory is the key to
+guarantee that enough supply needs to be available to satisfy all
+of the demand.</p>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Objective:</span> Maximize the total gain:</div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><p>A possible objective function might be:</p>
+<div class="math notranslate nohighlight">
+\[
+\min \sum_{j \in \set{Foods}}\sum_{t=1}^T  \left( \param{Cost}_j^t
+\var{Buy}_{jt} +
+\param{InvCost}_{jt}
+\var{s}_{jt} \right)
+\]</div></div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-3"></span>Aggregate production planning</p>
+</dd>
+</dl>
+<p>Assume that a  company needs to plan
+production and workforce levels for a given time period,
+based on demand forecast. We assume that either a single product
+is planned, or in any case requirements are expressed, e.g., in
+FTE (Full Time Equivalent) units of measurement.</p>
+<p>As in standard product mix problems, the quantity
+of resources needed is assumed to be given;
+assume also there is the possibility of hiring
+staff or to have a limited amount of  overtime in each period
+planning horizon. We wish to formulate a model for
+production planning,  labor requirements,
+hiring, in order to minimize the total cost.</p>
+<p>This is an example of multi-period planning:  decisions made
+today regarding production and staff levels will possibly affect  decisions
+to be taken in subsequent periods. We recall here the basic
+inventory balance equation:</p>
+<div class="math notranslate nohighlight">
+\[
+\var{s}_{t-1} + \var{In}_t = \var{Out}_t + \var{s}_{t}
+\]</div><p>While the above equation is associated to inventory (finished goods,
+prime material, …) it can be seen that a similar equation will be
+needed for staff level:
+in this case <span class="math notranslate nohighlight">\(\var{In}\)</span> and <span class="math notranslate nohighlight">\(\var{Out}\)</span> represent the quantity of
+staff hired or laid off during a period, while <span class="math notranslate nohighlight">\(\var{s}\)</span> denotes the
+staff level.</p>
+<p><span class="smallcaps">Aggregate production planning for a single product</span></p>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Sets:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\set{ProdType}\)</span>: production modes: regular,
+overtime, external</p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Parameters:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\param{T}\)</span>: the planning horizon;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{ProductCost}_p\)</span>: total cost, inclusive of labor and
+cost of raw materials, required to produce one unit
+using production  mode  <span class="math notranslate nohighlight">\(p \in \set{ProdType}\)</span>;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{RegularCost}\)</span>:  cost for one hour of  regular work
+Regular wages are paid, independently
+on the quantity produced. It is thus possible that
+part of the production capacity is not used;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{MaxProd}_p\)</span>: maximum  production in
+a single period using production mode  <span class="math notranslate nohighlight">\(p \in \set{ProdType}\)</span>;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{InitialInv}\)</span>: initial level of the inventory;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{FinalInv}\)</span>: required  level of the inventory at
+the end of the planning period;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{InvCost}\)</span>:  inventory cost (for one unit, for
+one time period);</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{Cap}\)</span>: maximum  inventory capacity;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{Demand}_t\)</span>:  (known) demand for the product in period
+<span class="math notranslate nohighlight">\(t \in 1,T\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{InitialStaff}\)</span>: initial staff level</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{FinalStaff}\)</span>: required final staff level</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{MaxRegProd}\)</span>: maximum production in a single period by
+a regular work unit</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{HireCost}\)</span>:  cost for hiring one unit</p></li>
+<li><p><span class="math notranslate nohighlight">\(\param{LayoffCost}\)</span>: cost for laying off one unit of workforce</p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Variables:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\var{Prod}_{t, p}\)</span>:  quantity to be produced in period
+<span class="math notranslate nohighlight">\(t\)</span> with production type  <span class="math notranslate nohighlight">\(p\in \set{ProdType}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\var{s}_t\)</span>: inventory level at the end of
+period <span class="math notranslate nohighlight">\(t\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\var{Hire}_t\)</span>: number of worker units hired at the beginning
+of period t</p></li>
+<li><p><span class="math notranslate nohighlight">\(\var{Layoff}_t\)</span>: number of
+workers laid off at the beginning of  period <span class="math notranslate nohighlight">\(t\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\var{Work}_t\)</span>: number of workers available in  period
+<span class="math notranslate nohighlight">\(t\)</span></p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Constraints:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul>
+<li><p>Non-negativity for all variables (and, usually, integrality);</p></li>
+<li><p>Inventory capacity:
+<span class="math notranslate nohighlight">\(0 \leq \var{s}_t \leq \param{Cap}\)</span></p></li>
+<li><p>Inventory balance:</p>
+<div class="math notranslate nohighlight">
+\[
+\sum_{p \in \set{ProdType}} \var{Prod}_{t, p} +
+\var{s}_{t-1}
+= \var{s}_t + \param{Demamnd}_p
+\]</div><p>When <span class="math notranslate nohighlight">\(t=1\)</span>, in the equation <span class="math notranslate nohighlight">\(\var{s}_{t-1}\)</span>
+needs to be replaced by <span class="math notranslate nohighlight">\(\param{InitialInv}\)</span></p>
+</li>
+<li><p>Final inventory</p>
+<div class="math notranslate nohighlight">
+\[
+\var{s}_{T} = \param{FinalInv}
+\]</div></li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p>Workforce balance:</p>
+<div class="math notranslate nohighlight">
+\[
+\var{Work}_t =
+\var{Work}_{t-1} + \var{Hire}_t -  \var{Layoff}_t
+\]</div><p>where, as in the inventory balance, in the first period
+<span class="math notranslate nohighlight">\(\var{work}_0\)</span> should be
+substituted by  <span class="math notranslate nohighlight">\(\param{InitialStaff}\)</span></p>
+</li>
+<li><p>Final workforce level</p>
+<div class="math notranslate nohighlight">
+\[
+\var{Work}_{T} = \param{FinaStaff}
+\]</div></li>
+<li><p>production limit:</p>
+<div class="math notranslate nohighlight">
+\[
+\var{Prod}_{t, p} \leq \param{MaxProd}_p
+\]</div><p>for every <span class="math notranslate nohighlight">\(p \in \set{ProdType}\)</span>  except regular production
+type, for which a separate constraint is given, and each
+period <span class="math notranslate nohighlight">\(t\)</span></p>
+</li>
+</ul>
+</div></blockquote>
+<ul>
+<li><p>Maximum production limit on regular hours:</p>
+<div class="math notranslate nohighlight">
+\[
+\var{Prod}_{t, Regular} \leq \var{Work}_t \param{MaxProd}_{Regular}
+\]</div><p>for <span class="math notranslate nohighlight">\(t =1,T\)</span>.</p>
+</li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Objective:</span> Maximize the total gain:</div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><p>The objective function is composed of the cost for overtime and for
+external production, the inventory cost and the cost for hiring and
+laying off; the cost for regular production depends on the staff
+level.</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\min &amp; \sum_{t \in 1,T} ( \sum_{p \in \{Overtime, External \}} \param{ProdCost}_p
+\var{Prod}_{t, p} \\
+&amp; + \param{RegularCost} \var{Work}_t * \param{MaxRegProd} \\
+&amp; + \param{InvCost} \var{s}_t \\
+&amp; + \param{HireCOst} \var{Hire}_t + \param{LayoffCost} \var{Layoff}_t
+)
+\end{align*}</div></div></blockquote>
+<p>As an example, consider  the data contained in the following file:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-0-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-0-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-0-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-0-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">AggrProd.dat</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Aggregate production planning example</span>
+
+<span class="n">param</span> <span class="n">T</span> <span class="o">:=</span> <span class="mi">12</span><span class="p">;</span> <span class="c1"># Planning Period</span>
+
+<span class="nb">set</span> <span class="n">PRODTYPE</span> <span class="o">:=</span> <span class="n">Regular</span> <span class="n">Overtime</span> <span class="n">External</span><span class="p">;</span>
+
+<span class="n">param</span><span class="p">:</span>  <span class="n">ProdCost</span> <span class="n">MaxProd</span><span class="o">:=</span>
+<span class="n">Regular</span>   <span class="mf">3.5</span>     <span class="mi">4000</span>
+<span class="n">Overtime</span>  <span class="mf">3.7</span>    <span class="mi">15000</span>
+<span class="n">External</span>  <span class="mf">4.2</span>     <span class="mi">5000</span>
+<span class="p">;</span>
+
+<span class="n">param</span> <span class="n">RegularCost</span> <span class="o">:=</span> <span class="mf">0.525</span><span class="p">;</span>
+<span class="c1"># regular workforce cost (Euro) for a single product </span>
+
+<span class="n">param</span> <span class="n">InvCost</span> <span class="o">:=</span> <span class="mf">0.28</span><span class="p">;</span>
+<span class="c1"># inventory cost per product per period</span>
+
+<span class="n">param</span> <span class="n">HireCost</span> <span class="o">:=</span> <span class="mi">1000</span><span class="p">;</span> <span class="c1"># hiring cost (Euro) </span>
+<span class="n">param</span> <span class="n">LayoffCost</span> <span class="o">:=</span> <span class="mi">600</span><span class="p">;</span> <span class="c1"># cost for laying off</span>
+
+<span class="n">param</span> <span class="n">InitialInv</span> <span class="o">:=</span> <span class="mi">30000</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Demand</span><span class="o">:=</span> 
+<span class="mi">1</span>   <span class="mi">70000</span>
+<span class="mi">2</span>  <span class="mi">150000</span>
+<span class="mi">3</span>  <span class="mi">320000</span>
+<span class="mi">4</span>  <span class="mi">100000</span> 
+<span class="mi">5</span>  <span class="mi">300000</span>
+<span class="mi">6</span>  <span class="mi">350000</span>
+<span class="mi">7</span>  <span class="mi">250000</span>
+<span class="mi">8</span>    <span class="mi">2000</span>
+<span class="mi">9</span>   <span class="mi">50000</span>
+<span class="mi">10</span> <span class="mi">120000</span>
+<span class="mi">11</span> <span class="mi">130000</span>
+<span class="mi">12</span> <span class="mi">100000</span><span class="p">;</span>
+<span class="c1"># demand per period</span>
+
+<span class="c1"># initial workforce level</span>
+<span class="n">param</span> <span class="n">InitialStaff</span> <span class="o">:=</span> <span class="mi">30</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-0-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">AggrProd.dat</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Aggregate production planning example</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="mi">12</span> <span class="c1"># Planning Period</span>
+
+<span class="n">PRODTYPE</span><span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Regular&quot;</span><span class="p">,</span> <span class="s2">&quot;Overtime&quot;</span><span class="p">,</span> <span class="s2">&quot;External&quot;</span><span class="p">]</span>
+
+<span class="n">ProdCost</span> <span class="o">=</span> <span class="n">JuMP</span><span class="o">.</span><span class="n">Containers</span><span class="o">.</span><span class="n">DenseAxisArray</span><span class="p">([</span>
+   <span class="mf">3.5</span><span class="p">;</span>
+   <span class="mf">3.7</span><span class="p">;</span>
+   <span class="mf">4.2</span><span class="p">],</span>
+<span class="n">PRODTYPE</span><span class="p">)</span>
+
+<span class="n">RegularCost</span> <span class="o">=</span> <span class="mf">0.525</span>
+<span class="c1"># regular workforce cost (Euro) for a single product </span>
+
+<span class="n">InvCost</span> <span class="o">=</span> <span class="mf">0.28</span>
+<span class="c1"># inventory cost per product per period</span>
+
+<span class="n">HireCost</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span> <span class="c1"># hiring cost (Euro) </span>
+<span class="n">LayoffCost</span> <span class="o">=</span> <span class="mi">600</span><span class="p">;</span> <span class="c1"># cost for laying off</span>
+
+
+<span class="n">MaxProd</span>  <span class="o">=</span> <span class="n">JuMP</span><span class="o">.</span><span class="n">Containers</span><span class="o">.</span><span class="n">DenseAxisArray</span><span class="p">([</span>
+ <span class="mi">4000</span><span class="p">;</span>
+ <span class="mi">15000</span><span class="p">;</span>
+<span class="mi">5000</span><span class="p">],</span>
+<span class="n">PRODTYPE</span><span class="p">)</span>
+
+<span class="n">InitialInv</span> <span class="o">=</span> <span class="mi">30000</span> 
+<span class="n">FinalInv</span> <span class="o">=</span> <span class="mi">30000</span> 
+
+<span class="n">Demand</span> <span class="o">=</span> <span class="p">[</span>
+ <span class="mi">70000</span>
+ <span class="mi">150000</span>
+ <span class="mi">320000</span>
+ <span class="mi">100000</span> 
+ <span class="mi">300000</span>
+ <span class="mi">350000</span>
+ <span class="mi">250000</span>
+ <span class="mi">2000</span>
+ <span class="mi">50000</span>
+ <span class="mi">120000</span>
+ <span class="mi">130000</span>
+ <span class="mi">100000</span><span class="p">]</span>
+<span class="c1"># numero di prodotti venduti in ogni periodo </span>
+
+<span class="c1"># initial workforce level</span>
+<span class="n">InitialStaff</span> <span class="o">=</span> <span class="mi">30</span> 
+<span class="c1"># final workforce level</span>
+<span class="n">FinalStaff</span> <span class="o">=</span> <span class="mi">30</span>
+
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>It may be interesting to compare the optimal plan obtained through
+our proposed model, with greedy (or myopic) plans computed through
+two classical  aggregate production planning strategies, the
+<span class="target" id="index-4"></span>level  and the <span class="target" id="index-5"></span>chase strategies. In a <em>level</em> strategy
+the workforce level is kept constant during the whole period, with,
+possibly, a single level change at the initial period.
+The optimal level can be quite easily found with simple enough ad-hoc
+strategies;
+in order to compare with the optimal one, we may choose to
+obtain a level strategy  adding the constraint</p>
+<p>An alternative level strategy might also be considered in which the
+total production is constant.</p>
+<p>In a  chase strategy instead the production in each  period exactly  matches the demand. In
+in this case the inventory, with the only possible exceptions in the
+first and last periods,  will always be empty. This
+strategy can be extremely easily solved -
+the use of a model is superfluous in this case. However, in order to
+automate the procedure, in the following models we include two
+constraints which, if activated, lead to level or chase strategies.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-1-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-1-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-1-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-1-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">AggrProd.mod</span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#------------------------------------------------------#</span>
+<span class="c1">#     aggregate production planning                    #</span>
+<span class="c1">#------------------------------------------------------#</span>
+
+<span class="n">param</span> <span class="n">T</span><span class="p">;</span> <span class="c1"># Planning Period</span>
+<span class="nb">set</span> <span class="n">PRODTYPE</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">ProdCost</span><span class="p">{</span><span class="n">PRODTYPE</span><span class="p">};</span>
+<span class="n">param</span> <span class="n">MaxProd</span><span class="p">{</span><span class="n">PRODTYPE</span><span class="p">}</span> <span class="n">default</span> <span class="n">Infinity</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">RegularCost</span><span class="p">;</span>
+<span class="c1"># regular workforce cost (Euro) for a single product </span>
+
+<span class="n">param</span> <span class="n">InvCost</span><span class="p">;</span>    <span class="c1"># inventory cost per product per period</span>
+
+<span class="n">param</span> <span class="n">HireCost</span><span class="p">;</span>   <span class="c1"># hiring cost (Euro) </span>
+<span class="n">param</span> <span class="n">LayoffCost</span><span class="p">;</span> <span class="c1"># cost for laying off</span>
+
+<span class="n">param</span> <span class="n">InitialInv</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">FinalInv</span><span class="p">;</span> 
+
+<span class="n">param</span> <span class="n">Demand</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">};</span> <span class="c1"># demand per period</span>
+
+<span class="c1"># initial workforce level</span>
+<span class="n">param</span> <span class="n">InitialStaff</span><span class="p">;</span>
+
+<span class="c1"># final required  workforce level</span>
+<span class="n">param</span> <span class="n">FinalStaff</span><span class="p">;</span>
+
+<span class="n">var</span> <span class="n">Prod</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">PRODTYPE</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">,</span> <span class="n">integer</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">Inv</span><span class="p">{</span><span class="mf">0.</span><span class="o">.</span><span class="n">T</span><span class="p">},</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">Hire</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">,</span> <span class="n">integer</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">Layoff</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">,</span> <span class="n">integer</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">Staff</span><span class="p">{</span><span class="mf">0.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">minimize</span> <span class="n">TotalCost</span> <span class="p">:</span>
+	<span class="nb">sum</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">PRODTYPE</span> <span class="n">diff</span> <span class="p">{</span><span class="s2">&quot;Regular&quot;</span><span class="p">}}</span> <span class="p">(</span><span class="n">ProdCost</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">Prod</span><span class="p">[</span><span class="n">t</span><span class="p">,</span><span class="n">p</span><span class="p">])</span>
+     <span class="o">+</span>  <span class="nb">sum</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="p">(</span><span class="n">RegularCost</span> <span class="o">*</span> <span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="n">MaxProd</span><span class="p">[</span><span class="s2">&quot;Regular&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">InvCost</span> <span class="o">*</span> <span class="n">Inv</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="n">HireCost</span> <span class="o">*</span> <span class="n">Hire</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">LayoffCost</span> <span class="o">*</span> <span class="n">Layoff</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="p">)</span> <span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">inventory_balance</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>
+	<span class="n">Inv</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">Demand</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">Inv</span><span class="p">[</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sum</span> <span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODTYPE</span><span class="p">}</span> <span class="n">Prod</span><span class="p">[</span><span class="n">t</span><span class="p">,</span><span class="n">p</span><span class="p">];</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">initialInv</span><span class="p">:</span>
+	<span class="n">Inv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">InitialInv</span><span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">workforce</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>
+	<span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">Hire</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">Layoff</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">initialWorkforce</span><span class="p">:</span>
+	<span class="n">Staff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">InitialStaff</span><span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">productionLimit</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">PRODTYPE</span><span class="p">:</span> <span class="n">p</span> <span class="o">!=</span> <span class="s2">&quot;Regular&quot;</span><span class="p">}:</span>
+	<span class="n">Prod</span><span class="p">[</span><span class="n">t</span><span class="p">,</span><span class="n">p</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">MaxProd</span><span class="p">[</span><span class="n">p</span><span class="p">];</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">regularProdutionLimit</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>
+	<span class="n">Prod</span><span class="p">[</span><span class="n">t</span><span class="p">,</span><span class="s2">&quot;Regular&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">*</span><span class="n">MaxProd</span><span class="p">[</span><span class="s2">&quot;Regular&quot;</span><span class="p">];</span>
+
+<span class="c1">#======= additional constraints for level and chase, only for teaching purpose =======</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">Level</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">2.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>  <span class="c1">#additional constraint to impose a level staff plan</span>
+       <span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">Chase</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>    <span class="c1">#additional alternative constraint to impose a chase strategy</span>
+      <span class="n">Staff</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">Demand</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/</span>  <span class="n">MaxProd</span><span class="p">[</span><span class="s2">&quot;Regular&quot;</span><span class="p">]);</span>
+
+<span class="c1"># the above constraints are initialy not imposed:</span>
+
+<span class="n">drop</span> <span class="n">Level</span><span class="p">;</span>
+<span class="n">drop</span> <span class="n">Chase</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-1-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">AggrProd.jl</span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># to be done</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>When solving the example with the three strategies, (the optimal, best
+level and chase ones) we obtain the following result:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-2-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-2-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-2-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-2-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-2-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">AggrProd.out</span><a class="headerlink" href="#id6" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Aggregate</span> <span class="n">Production</span> <span class="n">Results</span>
+<span class="o">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">Optimal</span> <span class="n">Plan</span>				 <span class="n">solved</span>
+<span class="o">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">Total</span> <span class="n">cost</span> <span class="ow">in</span> <span class="mi">12</span> <span class="n">periods</span><span class="p">:</span>   <span class="mi">1221060</span> <span class="n">Euro</span>
+
+
+
+<span class="n">t</span>	<span class="n">Prod</span>
+	<span class="n">Regular</span> 	<span class="n">Overtime</span> 	<span class="n">External</span> 
+<span class="mi">1</span>	<span class="mi">118000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">2</span>	<span class="mi">144000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">3</span>	<span class="mi">248000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">4</span>	<span class="mi">248000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">5</span>	<span class="mi">252000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">6</span>	<span class="mi">252000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">7</span>	<span class="mi">248000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">8</span>	<span class="mi">26000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">9</span>	<span class="mi">28000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">10</span>	<span class="mi">124000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">11</span>	<span class="mi">124000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">12</span>	<span class="mi">100000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+
+
+<span class="n">t</span>	<span class="n">Inv</span>	<span class="n">Demand</span>	<span class="n">Staff</span>	<span class="n">Hire</span>	<span class="n">Layoff</span>	<span class="n">Unused</span>
+<span class="mi">1</span>	<span class="mi">78000</span>	<span class="mi">70000</span>	<span class="mi">30</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">2000</span>
+<span class="mi">2</span>	<span class="mi">72000</span>	<span class="mi">150000</span>	<span class="mi">36</span>	<span class="mi">6</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">3</span>	<span class="mi">0</span>	<span class="mi">320000</span>	<span class="mi">62</span>	<span class="mi">26</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">4</span>	<span class="mi">148000</span>	<span class="mi">100000</span>	<span class="mi">62</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">5</span>	<span class="mi">100000</span>	<span class="mi">300000</span>	<span class="mi">63</span>	<span class="mi">1</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">6</span>	<span class="mi">2000</span>	<span class="mi">350000</span>	<span class="mi">63</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">7</span>	<span class="mi">0</span>	<span class="mi">250000</span>	<span class="mi">62</span>	<span class="mi">0</span>	<span class="mi">1</span>	<span class="mi">0</span>
+<span class="mi">8</span>	<span class="mi">24000</span>	<span class="mi">2000</span>	<span class="mi">7</span>	<span class="mi">0</span>	<span class="mi">55</span>	<span class="mi">2000</span>
+<span class="mi">9</span>	<span class="mi">2000</span>	<span class="mi">50000</span>	<span class="mi">7</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">10</span>	<span class="mi">6000</span>	<span class="mi">120000</span>	<span class="mi">31</span>	<span class="mi">24</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">11</span>	<span class="mi">0</span>	<span class="mi">130000</span>	<span class="mi">31</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">12</span>	<span class="mi">0</span>	<span class="mi">100000</span>	<span class="mi">25</span>	<span class="mi">0</span>	<span class="mi">6</span>	<span class="mi">0</span>
+
+
+<span class="o">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+ <span class="n">Level</span> <span class="n">Plan</span>			 <span class="n">solved</span>
+<span class="o">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">Total</span> <span class="n">cost</span> <span class="ow">in</span> <span class="mi">12</span> <span class="n">periods</span><span class="p">:</span>   <span class="mi">1665920</span> <span class="n">Euro</span>
+
+
+
+<span class="n">t</span>	<span class="n">Prod</span>
+	<span class="n">Regular</span> 	<span class="n">Overtime</span> 	<span class="n">External</span> 
+<span class="mi">1</span>	<span class="mi">214000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">2</span>	<span class="mi">216000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">3</span>	<span class="mi">216000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">4</span>	<span class="mi">216000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">5</span>	<span class="mi">216000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">6</span>	<span class="mi">216000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">7</span>	<span class="mi">216000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">8</span>	<span class="mi">2000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">9</span>	<span class="mi">50000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">10</span>	<span class="mi">120000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">11</span>	<span class="mi">130000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">12</span>	<span class="mi">100000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+
+
+<span class="n">t</span>	<span class="n">Inv</span>	<span class="n">Demand</span>	<span class="n">Staff</span>	<span class="n">Hire</span>	<span class="n">Layoff</span>	<span class="n">Unused</span>
+<span class="mi">1</span>	<span class="mi">174000</span>	<span class="mi">70000</span>	<span class="mi">54</span>	<span class="mi">24</span>	<span class="mi">0</span>	<span class="mi">2000</span>
+<span class="mi">2</span>	<span class="mi">240000</span>	<span class="mi">150000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">3</span>	<span class="mi">136000</span>	<span class="mi">320000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">4</span>	<span class="mi">252000</span>	<span class="mi">100000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">5</span>	<span class="mi">168000</span>	<span class="mi">300000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">6</span>	<span class="mi">34000</span>	<span class="mi">350000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">7</span>	<span class="mi">0</span>	<span class="mi">250000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">8</span>	<span class="mi">0</span>	<span class="mi">2000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">214000</span>
+<span class="mi">9</span>	<span class="mi">0</span>	<span class="mi">50000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">166000</span>
+<span class="mi">10</span>	<span class="mi">0</span>	<span class="mi">120000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">96000</span>
+<span class="mi">11</span>	<span class="mi">0</span>	<span class="mi">130000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">86000</span>
+<span class="mi">12</span>	<span class="mi">0</span>	<span class="mi">100000</span>	<span class="mi">54</span>	<span class="mi">0</span>	<span class="mi">0</span>	<span class="mi">116000</span>
+
+
+<span class="o">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+ <span class="n">Chase</span>  <span class="n">Plan</span>			 <span class="n">solved</span>
+<span class="o">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">Total</span> <span class="n">cost</span> <span class="ow">in</span> <span class="mi">12</span> <span class="n">periods</span><span class="p">:</span>   <span class="mi">1281100</span> <span class="n">Euro</span>
+
+
+
+<span class="n">t</span>	<span class="n">Prod</span>
+	<span class="n">Regular</span> 	<span class="n">Overtime</span> 	<span class="n">External</span> 
+<span class="mi">1</span>	<span class="mi">40000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">2</span>	<span class="mi">150000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">3</span>	<span class="mi">320000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">4</span>	<span class="mi">100000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">5</span>	<span class="mi">300000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">6</span>	<span class="mi">350000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">7</span>	<span class="mi">250000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">8</span>	<span class="mi">2000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">9</span>	<span class="mi">50000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">10</span>	<span class="mi">120000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">11</span>	<span class="mi">130000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+<span class="mi">12</span>	<span class="mi">100000</span>		<span class="mi">0</span>		<span class="mi">0</span>		
+
+
+<span class="n">t</span>	<span class="n">Inv</span>	<span class="n">Demand</span>	<span class="n">Staff</span>	<span class="n">Hire</span>	<span class="n">Layoff</span>	<span class="n">Unused</span>
+<span class="mi">1</span>	<span class="mi">0</span>	<span class="mi">70000</span>	<span class="mi">18</span>	<span class="mi">0</span>	<span class="mi">12</span>	<span class="mi">32000</span>
+<span class="mi">2</span>	<span class="mi">0</span>	<span class="mi">150000</span>	<span class="mi">38</span>	<span class="mi">20</span>	<span class="mi">0</span>	<span class="mi">2000</span>
+<span class="mi">3</span>	<span class="mi">0</span>	<span class="mi">320000</span>	<span class="mi">80</span>	<span class="mi">42</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">4</span>	<span class="mi">0</span>	<span class="mi">100000</span>	<span class="mi">25</span>	<span class="mi">0</span>	<span class="mi">55</span>	<span class="mi">0</span>
+<span class="mi">5</span>	<span class="mi">0</span>	<span class="mi">300000</span>	<span class="mi">75</span>	<span class="mi">50</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">6</span>	<span class="mi">0</span>	<span class="mi">350000</span>	<span class="mi">88</span>	<span class="mi">13</span>	<span class="mi">0</span>	<span class="mi">2000</span>
+<span class="mi">7</span>	<span class="mi">0</span>	<span class="mi">250000</span>	<span class="mi">63</span>	<span class="mi">0</span>	<span class="mi">25</span>	<span class="mi">2000</span>
+<span class="mi">8</span>	<span class="mi">0</span>	<span class="mi">2000</span>	<span class="mi">1</span>	<span class="mi">0</span>	<span class="mi">62</span>	<span class="mi">2000</span>
+<span class="mi">9</span>	<span class="mi">0</span>	<span class="mi">50000</span>	<span class="mi">13</span>	<span class="mi">12</span>	<span class="mi">0</span>	<span class="mi">2000</span>
+<span class="mi">10</span>	<span class="mi">0</span>	<span class="mi">120000</span>	<span class="mi">30</span>	<span class="mi">17</span>	<span class="mi">0</span>	<span class="mi">0</span>
+<span class="mi">11</span>	<span class="mi">0</span>	<span class="mi">130000</span>	<span class="mi">33</span>	<span class="mi">3</span>	<span class="mi">0</span>	<span class="mi">2000</span>
+<span class="mi">12</span>	<span class="mi">0</span>	<span class="mi">100000</span>	<span class="mi">25</span>	<span class="mi">0</span>	<span class="mi">8</span>	<span class="mi">0</span>
+
+
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-2-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">AggrProd.out</span><a class="headerlink" href="#id7" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># to be done</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>As expected, both the level and the  chase strategy produce a  plan
+whose cost is significantly higher than the one obtained through the
+optimal plan. As a side notice, please observe that this is not a
+linear optimization problem, but a mixed integer linear optimization
+one, as some variables, like the staff level, are constrained to
+assume integer values only. By the way, imposing the integrality of
+the number of hired or laid off personnel units and requiring that the
+initial staff level is integer, we obtain the integrality of the staff
+level even without imposing it.</p>
+<p>Although integrality is usually a very
+expensive constraint, i.e. a constraint which quite often makes a
+model extremely difficult or even impossible to solve in reasonable
+time, in this case the solution was found extremely quickly. It can be
+observed also that, although the computational effect of imposing
+integrality is in general  very strong, from a purely syntactic point
+of view asking a variable to assume only integer values is very easy
+in modern modeling languages.</p>
+<p>Another, quite similar, application  is based on
+cash flow management.</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-6"></span>Multiperiod financial planning</p>
+</dd>
+</dl>
+<p>In this application we will consider an elementary, deterministic,
+portfolio management problem.
+Consider the situation in which an investor has a known plan of
+revenues (e.g., wages) and expenses  for a given time horizon.
+Assume also that the investor might choose to buy some debt
+securities, like
+treasury bonds; these are financial instruments which guarantee a
+fixed, pre-determined, interest rate either periodically or in a
+unique solution  when they get reimbursed.</p>
+<p>The following data file includes an elementary example.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-3-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-3-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-3-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-3-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-3-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-3-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">invest.dat</span><a class="headerlink" href="#id8" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param</span> <span class="n">T</span> <span class="o">:=</span> <span class="mi">24</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">expenses</span> <span class="o">:=</span>
+<span class="mi">4</span>   <span class="mi">6800</span>
+<span class="mi">11</span>  <span class="mi">5800</span>
+<span class="mi">16</span>  <span class="mi">5800</span>
+<span class="mi">23</span>  <span class="mi">5800</span>
+<span class="p">;</span>
+
+<span class="n">param</span> <span class="n">income</span> <span class="o">:=</span>
+<span class="mi">1</span> <span class="mi">2000</span> <span class="mi">2</span> <span class="mi">2000</span> <span class="mi">3</span> <span class="mi">2000</span> <span class="mi">4</span> <span class="mi">2000</span> <span class="mi">5</span> <span class="mi">2000</span> <span class="mi">6</span> <span class="mi">2000</span> <span class="mi">7</span> <span class="mi">2000</span> <span class="mi">8</span> <span class="mi">2000</span> <span class="mi">9</span> <span class="mi">2000</span> <span class="mi">10</span> <span class="mi">2000</span>
+<span class="mi">11</span> <span class="mi">2000</span> <span class="mi">12</span> <span class="mi">2000</span> <span class="mi">13</span> <span class="mi">2000</span> <span class="mi">14</span> <span class="mi">2000</span> <span class="mi">15</span> <span class="mi">2000</span> <span class="mi">16</span> <span class="mi">2000</span> <span class="mi">17</span> <span class="mi">2000</span> <span class="mi">18</span> <span class="mi">2000</span> <span class="mi">19</span> <span class="mi">2000</span>
+<span class="mi">20</span> <span class="mi">2000</span> <span class="mi">21</span> <span class="mi">2000</span> <span class="mi">22</span> <span class="mi">2000</span> <span class="mi">23</span> <span class="mi">2000</span> <span class="mi">24</span> <span class="mi">2000</span>
+<span class="p">;</span>
+
+<span class="n">param</span> <span class="n">StartCash</span> <span class="o">:=</span> <span class="mi">4000</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">MinCash</span>   <span class="o">:=</span> <span class="mi">3000</span><span class="p">;</span>
+
+<span class="nb">set</span> <span class="n">INVEST</span> <span class="o">:=</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">1</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">3</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">6</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">12</span><span class="p">;</span>
+
+<span class="n">param</span><span class="p">:</span>    <span class="n">life</span>    <span class="n">nominal</span> <span class="o">:=</span>
+<span class="n">Cert</span><span class="o">-</span><span class="mi">1</span>      <span class="mi">1</span>      <span class="mf">1.20</span> 
+<span class="n">Cert</span><span class="o">-</span><span class="mi">3</span>      <span class="mi">3</span>      <span class="mf">1.31</span>
+<span class="n">Cert</span><span class="o">-</span><span class="mi">6</span>      <span class="mi">6</span>      <span class="mf">1.41</span>
+<span class="n">Cert</span><span class="o">-</span><span class="mi">12</span>    <span class="mi">12</span>      <span class="mf">1.6</span>
+<span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-3-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-3-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">invest.dat</span><a class="headerlink" href="#id9" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="mi">24</span>
+
+<span class="n">expenses</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+<span class="n">expenses</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6800</span>
+<span class="n">expenses</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5800</span>
+<span class="n">expenses</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5800</span>
+<span class="n">expenses</span><span class="p">[</span><span class="mi">23</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5800</span>
+
+<span class="n">income</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">T</span>
+   <span class="n">income</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">=</span> <span class="mi">2000</span>
+<span class="n">end</span>
+
+<span class="n">StartCash</span> <span class="o">=</span> <span class="mi">4000</span>
+<span class="n">MinCash</span>   <span class="o">=</span> <span class="mi">3000</span>
+
+<span class="n">INVEST</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Cert-1&quot;</span> <span class="s2">&quot;Cert-3&quot;</span> <span class="s2">&quot;Cert-6&quot;</span> <span class="s2">&quot;Cert-12&quot;</span><span class="p">]</span>
+
+
+<span class="n">invest_data</span>  <span class="o">=</span> <span class="n">JuMP</span><span class="o">.</span><span class="n">Containers</span><span class="o">.</span><span class="n">DenseAxisArray</span><span class="p">([</span>
+                <span class="mi">1</span>      <span class="mf">1.20</span><span class="p">;</span>       
+                <span class="mi">3</span>      <span class="mf">1.31</span><span class="p">;</span>
+                <span class="mi">6</span>      <span class="mf">1.41</span><span class="p">;</span>
+               <span class="mi">12</span>      <span class="mf">1.6</span><span class="p">;</span>
+<span class="p">],</span> <span class="n">INVEST</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;life&quot;</span> <span class="s2">&quot;nominal&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>In the file we included  a fixed salary, a periodic expense (e.g., a
+home loan), a minimum required level of the cash at the end of every
+month.
+In the example data  there are 4 investment options, in fixed income
+instruments with 1, 3, 6, 12 months life.
+A title with a life
+of <span class="math notranslate nohighlight">\(d\)</span> months with nominal yearly rate
+<span class="math notranslate nohighlight">\(r\)</span> will produce an interest which will be paid, together with the
+invested capital, <span class="math notranslate nohighlight">\(d\)</span> months after the purchase.
+The interest to be paid is computed as follows: a monthly bond
+with a nominal interest <span class="math notranslate nohighlight">\(r\)</span> will  produce <span class="math notranslate nohighlight">\(r/12\)</span> as
+the interest after one month, while a three-months bond  will
+produce <span class="math notranslate nohighlight">\(r \times 3/ 12 = r/4\)</span> as the
+interest after three moths from the investment.
+In general, an investment of <span class="math notranslate nohighlight">\(Q\)</span> euro in a bond
+with life <span class="math notranslate nohighlight">\(d\)</span> months and  nominal yearly interest rate
+<span class="math notranslate nohighlight">\(r\)</span>  will produce, after <span class="math notranslate nohighlight">\(d\)</span> months, an
+interest equal to <span class="math notranslate nohighlight">\(Q \cdot \frac{d}{12} \cdot \frac{r}{100}\)</span>.</p>
+<p>Now the problem can be formally posed as that of
+determine the amount of each bond to be purchased in each
+month to satisfy the constraints on minimum cash, which, if non negative,
+also guarantees enough liquidity to be available for all the required
+expenses.</p>
+<p>As an example of a possible objective function, here we assume we wish
+to maximize the total amount of interest received. Take into account
+the fact that this has the negative effect of concentrating much of
+the investments in order to produce a large final cash at the end of
+the optimization period, which is not usually a desirable
+situation. However, this is due to the fact that in planning with a
+finite horizon we are assuming that at the end of the period
+everything should be available as cash. This border effect might be
+mitigated in many different ways, choosing a more suitable objective
+function. A possibility might be that of considering a rolling-horizon
+approach, in which a long term plan, say 5 years, is prepared and a
+much shorter plan is actually implemented. As an example, we might
+wish to follow the plan for one year, after which we re-run the model
+for the following 5 years and so on. Another possibility is to apply
+a <em>discount factor</em> to future cash flow, based e.g. on the inflation
+rate, so that the same amount of money has different value depending
+on how far in the future it will be available.</p>
+<p>The following model implements a basic investment exercise.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-4-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-4-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-4-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-4-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-4-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-4-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">invest.mod</span><a class="headerlink" href="#id10" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#------------------------------------------------------#</span>
+<span class="c1">#     financial  planning                              #</span>
+<span class="c1">#------------------------------------------------------#</span>
+
+<span class="nb">set</span> <span class="n">INVEST</span><span class="p">;</span> <span class="c1"># investment options</span>
+<span class="n">param</span> <span class="n">T</span><span class="p">;</span>    <span class="c1"># time horizon</span>
+<span class="n">param</span> <span class="n">expenses</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="n">default</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1"># payments in the period</span>
+<span class="n">param</span> <span class="n">income</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="n">default</span> <span class="mi">0</span><span class="p">;</span>    <span class="c1"># revenues in the period</span>
+<span class="n">param</span> <span class="n">StartCash</span><span class="p">;</span>                 <span class="c1"># initial available cash</span>
+<span class="n">param</span> <span class="n">MinCash</span> <span class="n">default</span> <span class="mi">0</span><span class="p">;</span>         <span class="c1"># minimum desired cash level</span>
+
+<span class="n">param</span> <span class="n">life</span><span class="p">{</span><span class="n">INVEST</span><span class="p">};</span>              <span class="c1"># number of periods before capital reimbursement</span>
+<span class="n">param</span> <span class="n">nominal</span><span class="p">{</span><span class="n">INVEST</span><span class="p">};</span>           <span class="c1"># nominal interest rate</span>
+
+<span class="n">var</span> <span class="n">Buy</span><span class="p">{</span><span class="n">INVEST</span><span class="p">,</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">;</span>       <span class="c1"># amount to invest</span>
+<span class="n">var</span> <span class="n">Cash</span><span class="p">{</span><span class="mf">0.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="n">MinCash</span><span class="p">;</span>       <span class="c1"># cash level at the end of each period</span>
+
+<span class="n">var</span> <span class="n">Reimburse</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>        <span class="c1"># reimbursement of past investments</span>
+
+<span class="n">maximize</span> <span class="n">TotalInterest</span><span class="p">:</span> <span class="nb">sum</span> <span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}</span> <span class="nb">sum</span> <span class="p">{</span><span class="n">i</span> <span class="ow">in</span> <span class="n">INVEST</span><span class="p">:</span> <span class="n">life</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">}</span> <span class="p">(</span><span class="n">Buy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">t</span><span class="o">-</span><span class="n">life</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">*</span> <span class="n">nominal</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">life</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1200.</span><span class="p">);</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">Start</span><span class="p">:</span>
+	<span class="n">Cash</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">StartCash</span><span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">CashFlow</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>
+	<span class="n">Cash</span><span class="p">[</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">income</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">Reimburse</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="o">=</span> <span class="n">Cash</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">expenses</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">{</span><span class="n">i</span> <span class="ow">in</span> <span class="n">INVEST</span><span class="p">}</span> <span class="n">Buy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">t</span><span class="p">];</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">interestCalculation</span><span class="p">{</span><span class="n">t</span> <span class="ow">in</span> <span class="mf">1.</span><span class="o">.</span><span class="n">T</span><span class="p">}:</span>
+	<span class="n">Reimburse</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">sum</span> <span class="p">{</span><span class="n">i</span> <span class="ow">in</span> <span class="n">INVEST</span><span class="p">:</span> <span class="n">life</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">}</span> <span class="p">(</span><span class="n">Buy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">t</span><span class="o">-</span><span class="n">life</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">nominal</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">life</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1200.</span><span class="p">));</span>
+
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-4-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-4-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">invest.jl</span><a class="headerlink" href="#id11" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#------------------------------------------------------#</span>
+<span class="c1">#     finanical  planning                              #</span>
+<span class="c1">#------------------------------------------------------#</span>
+
+<span class="n">function</span> <span class="n">financialPlanning</span><span class="p">(</span><span class="n">model</span><span class="p">::</span><span class="n">Model</span><span class="p">,</span> <span class="n">datafile</span><span class="p">::</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">include</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span>
+
+<span class="nd">@variable</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Buy</span><span class="p">[</span><span class="n">INVEST</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">]</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">)</span> <span class="p">;</span>
+
+<span class="nd">@variable</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Cash</span><span class="p">[</span><span class="n">t</span> <span class="ow">in</span> <span class="mi">0</span><span class="p">:</span><span class="n">T</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">MinCash</span><span class="p">)</span> 
+<span class="c1"># cash level at the end of each period</span>
+
+<span class="nd">@variable</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Reimburse</span><span class="p">[</span><span class="n">t</span> <span class="ow">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="nd">@objective</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Max</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Buy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">t</span><span class="o">-</span><span class="n">Int</span><span class="p">(</span><span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;life&quot;</span><span class="p">])]</span> <span class="o">*</span> <span class="p">(</span><span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;nominal&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;life&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1200.</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">INVEST</span> <span class="k">if</span> <span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;life&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">))</span>
+
+<span class="nd">@constraint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Start</span><span class="p">,</span> <span class="n">Cash</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">StartCash</span><span class="p">)</span>
+
+<span class="nd">@constraint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">CashFlow</span><span class="p">[</span><span class="n">t</span> <span class="ow">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">],</span> <span class="n">Cash</span><span class="p">[</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">income</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">Reimburse</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+<span class="o">==</span> <span class="n">Cash</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">expenses</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Buy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">INVEST</span><span class="p">))</span>
+
+<span class="nd">@constraint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">interestCalculation</span><span class="p">[</span><span class="n">t</span> <span class="ow">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">],</span>
+    <span class="n">Reimburse</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Buy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">t</span><span class="o">-</span><span class="n">Int</span><span class="p">(</span><span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;life&quot;</span><span class="p">])]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;nominal&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;life&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1200.</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">INVEST</span> <span class="k">if</span> <span class="n">invest_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;life&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">))</span>
+<span class="n">end</span>
+
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>The solution of this model can be presented by listing,
+month by month, the situation of purchases, of the cashier, of the
+interest paid:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Buy</span> <span class="p">[</span><span class="o">*</span><span class="p">,</span><span class="o">*</span><span class="p">]</span> <span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+<span class="p">:</span>     <span class="n">Cert</span><span class="o">-</span><span class="mi">1</span>     <span class="n">Cert</span><span class="o">-</span><span class="mi">12</span>   <span class="n">Cert</span><span class="o">-</span><span class="mi">3</span>     <span class="n">Cert</span><span class="o">-</span><span class="mi">6</span>     <span class="o">:=</span>
+<span class="mi">1</span>        <span class="mi">0</span>          <span class="mi">0</span>      <span class="mi">3000</span>         <span class="mi">0</span>
+<span class="mi">2</span>      <span class="mf">232.391</span>      <span class="mi">0</span>      <span class="mf">1767.61</span>      <span class="mi">0</span>
+<span class="mi">3</span>     <span class="mf">1788.39</span>       <span class="mi">0</span>         <span class="mi">0</span>       <span class="mf">444.237</span>
+<span class="mi">4</span>        <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">5</span>        <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>      <span class="mf">3773.4</span>
+<span class="mi">6</span>        <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>      <span class="mi">2000</span>
+<span class="mi">7</span>        <span class="mi">0</span>          <span class="mi">0</span>      <span class="mi">2000</span>         <span class="mi">0</span>
+<span class="mi">8</span>     <span class="mi">2000</span>          <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">9</span>        <span class="mi">0</span>       <span class="mf">4449.37</span>      <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">10</span>       <span class="mi">0</span>       <span class="mf">4006.55</span>      <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">11</span>       <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">12</span>       <span class="mi">0</span>       <span class="mf">4014.1</span>       <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">13</span>       <span class="mi">0</span>          <span class="mi">0</span>      <span class="mi">2000</span>         <span class="mi">0</span>
+<span class="mi">14</span>    <span class="mi">2000</span>          <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">15</span>    <span class="mf">1791.66</span>       <span class="mi">0</span>         <span class="mi">0</span>      <span class="mf">2210.34</span>
+<span class="mi">16</span>       <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">17</span>       <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>      <span class="mi">2000</span>
+<span class="mi">18</span>       <span class="mi">0</span>          <span class="mi">0</span>         <span class="mi">0</span>      <span class="mi">2000</span>
+<span class="mi">19</span>       <span class="mi">0</span>          <span class="mi">0</span>      <span class="mi">2000</span>         <span class="mi">0</span>
+<span class="mi">20</span>       <span class="mi">0</span>          <span class="mi">0</span>      <span class="mi">2000</span>         <span class="mi">0</span>
+<span class="mi">21</span>       <span class="mi">0</span>          <span class="mi">0</span>      <span class="mf">8746.48</span>      <span class="mi">0</span>
+<span class="mi">22</span>    <span class="mf">8077.2</span>        <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">23</span>    <span class="mf">8305.93</span>       <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="mi">24</span>   <span class="mf">25181.8</span>        <span class="mi">0</span>         <span class="mi">0</span>         <span class="mi">0</span>
+<span class="p">;</span>
+
+<span class="p">:</span>    <span class="n">Cash</span>   <span class="n">Reimburse</span> <span class="n">expenses</span> <span class="n">income</span>    <span class="o">:=</span>
+<span class="mi">0</span>    <span class="mi">4000</span>       <span class="o">.</span>          <span class="o">.</span>       <span class="o">.</span>
+<span class="mi">1</span>    <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">2</span>    <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">3</span>    <span class="mi">3000</span>     <span class="mf">232.624</span>       <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">4</span>    <span class="mi">3000</span>    <span class="mi">4800</span>        <span class="mi">6800</span>    <span class="mi">2000</span>
+<span class="mi">5</span>    <span class="mi">3000</span>    <span class="mf">1773.4</span>         <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">6</span>    <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">7</span>    <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">8</span>    <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">9</span>    <span class="mi">3000</span>    <span class="mf">2449.37</span>        <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">10</span>   <span class="mi">3000</span>    <span class="mf">2006.55</span>        <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">11</span>   <span class="mi">3000</span>    <span class="mi">3800</span>        <span class="mi">5800</span>    <span class="mi">2000</span>
+<span class="mi">12</span>   <span class="mi">3000</span>    <span class="mf">2014.1</span>         <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">13</span>   <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">14</span>   <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">15</span>   <span class="mi">3000</span>    <span class="mi">2002</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">16</span>   <span class="mi">3000</span>    <span class="mi">3800</span>        <span class="mi">5800</span>    <span class="mi">2000</span>
+<span class="mi">17</span>   <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">18</span>   <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">19</span>   <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">20</span>   <span class="mi">3000</span>       <span class="mi">0</span>           <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">21</span>   <span class="mi">3000</span>    <span class="mf">6746.48</span>        <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">22</span>   <span class="mi">3000</span>    <span class="mf">6077.2</span>         <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">23</span>   <span class="mi">3000</span>   <span class="mf">12105.9</span>      <span class="mi">5800</span>    <span class="mi">2000</span>
+<span class="mi">24</span>   <span class="mi">3000</span>   <span class="mf">23181.8</span>         <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="p">;</span>
+
+</pre></div>
+</div>
+<p>It can be observed, from the example above, that the final cash is
+almost always exactly equal to the required minimum, as all excess
+liquidity is immediately invested. The only exception is the cash at
+the end of period 24. It is also possible to see how different
+investment options are used, taking into account forecasted
+expenses.</p>
+<p>This simple example produces a feasible financial plan with a total
+amount of paid interests equal to 381.79. It might be notices that, however,
+this strategy might not be feasible, as it is not possible to buy
+fractions of a bond. Even more, usually  bonds can be acquired
+only in integer multiples of, say, 1000 euro. This additional
+constraint is easily imposed, but the underlying model is no more a
+pure linear optimization one as it requires integer variables which, in
+general, make the solution much harder to find and to certify. Running
+the integer variant of this model in which we assume that bonds can
+be bought in multiples of 1000 euro, after a few minutes of computation
+we stopped the algorithm and obtained the following solution.</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Buy</span> <span class="p">[</span><span class="o">*</span><span class="p">,</span><span class="o">*</span><span class="p">]</span> <span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+<span class="p">:</span>  <span class="n">Cert</span><span class="o">-</span><span class="mi">1</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">12</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">3</span> <span class="n">Cert</span><span class="o">-</span><span class="mi">6</span>    <span class="o">:=</span>
+<span class="mi">1</span>     <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">3</span>     <span class="mi">0</span>
+<span class="mi">2</span>     <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>     <span class="mi">0</span>
+<span class="mi">3</span>     <span class="mi">2</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">5</span>     <span class="mi">2</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">2</span>
+<span class="mi">6</span>     <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">4</span>
+<span class="mi">7</span>     <span class="mi">2</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">8</span>     <span class="mi">4</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">9</span>     <span class="mi">0</span>       <span class="mi">6</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">10</span>    <span class="mi">2</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">12</span>    <span class="mi">0</span>       <span class="mi">6</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">13</span>    <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>     <span class="mi">0</span>
+<span class="mi">14</span>    <span class="mi">2</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">15</span>    <span class="mi">2</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">2</span>
+<span class="mi">17</span>    <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">2</span>
+<span class="mi">18</span>    <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">2</span>
+<span class="mi">19</span>    <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>     <span class="mi">0</span>
+<span class="mi">20</span>    <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>     <span class="mi">0</span>
+<span class="mi">21</span>    <span class="mi">0</span>       <span class="mi">0</span>      <span class="mi">10</span>     <span class="mi">0</span>
+<span class="mi">22</span>    <span class="mi">4</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="mi">23</span>    <span class="mi">5</span>       <span class="mi">0</span>       <span class="mi">0</span>     <span class="mi">0</span>
+<span class="p">;</span>
+
+<span class="p">:</span>      <span class="n">Cash</span>    <span class="n">Reimburse</span> <span class="n">expenses</span> <span class="n">income</span>    <span class="o">:=</span>
+<span class="mi">0</span>     <span class="mi">4000</span>          <span class="o">.</span>         <span class="o">.</span>       <span class="o">.</span>
+<span class="mi">1</span>     <span class="mi">3000</span>          <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">2</span>     <span class="mi">3000</span>          <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">3</span>     <span class="mi">3000</span>          <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">4</span>     <span class="mf">3211.83</span>    <span class="mf">5011.82</span>    <span class="mi">6800</span>    <span class="mi">2000</span>
+<span class="mi">5</span>     <span class="mf">3218.38</span>    <span class="mf">2006.55</span>       <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">6</span>     <span class="mf">3220.38</span>    <span class="mi">2002</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">7</span>     <span class="mf">3220.38</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">8</span>     <span class="mf">3222.38</span>    <span class="mi">2002</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">9</span>     <span class="mf">3226.38</span>    <span class="mi">4004</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">10</span>    <span class="mf">3226.38</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">11</span>    <span class="mf">3442.48</span>    <span class="mf">4016.1</span>     <span class="mi">5800</span>    <span class="mi">2000</span>
+<span class="mi">12</span>    <span class="mf">3470.68</span>    <span class="mf">4028.2</span>        <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">13</span>    <span class="mf">3470.68</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">14</span>    <span class="mf">3470.68</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">15</span>    <span class="mf">3472.68</span>    <span class="mi">2002</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">16</span>    <span class="mf">3681.23</span>    <span class="mf">4008.55</span>    <span class="mi">5800</span>    <span class="mi">2000</span>
+<span class="mi">17</span>    <span class="mf">3681.23</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">18</span>    <span class="mf">3681.23</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">19</span>    <span class="mf">3681.23</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">20</span>    <span class="mf">3681.23</span>       <span class="mi">0</span>          <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">21</span>    <span class="mf">3791.33</span>    <span class="mf">8110.1</span>        <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">22</span>    <span class="mf">3797.88</span>    <span class="mf">2006.55</span>       <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="mi">23</span>    <span class="mf">3022.53</span>    <span class="mf">8024.65</span>    <span class="mi">5800</span>    <span class="mi">2000</span>
+<span class="mi">24</span>   <span class="mf">28170.4</span>    <span class="mf">23147.8</span>        <span class="mi">0</span>    <span class="mi">2000</span>
+<span class="p">;</span>
+
+<span class="n">TotalInterest</span> <span class="o">=</span> <span class="mf">370.375</span>
+
+</pre></div>
+</div>
+<p>This solution is more acceptable then the previous one and grants
+a total interest of 370.375 euro, thus showing that constraints
+(like the integrality requirement)  come with a cost (which in this
+case is roughly 0.03% of the previous one). This is not a
+certifiably optimal solution as the solver was artificially stopped
+before convergence. The solver however was able to certify that no
+solution with value better than 371.01204 might exist for this example.</p>
+<p>From the point of view
+modeling, the most important aspect of this application is the
+formulation of the cash balance equation:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{Cash}_t &amp; = \var{Cash}_{t-1} + \param{revenues}_t
++ \var{Reimburse}_t  \\
+&amp; - \param{expenses}_t- \sum_{inv} \var{Buy}_{inv,t}
+\end{align*}</div><p>The model for each single period consists of the definition
+of reimbursement:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{Reimburse}_t &amp; = \sum_{inv \in \set{INVEST} : t &gt; \param{Duration}(inv)}
+\var{Buy}_{inv, t- \param{Duration}(inv)} (1. + \param{InterestRate}_{inv})
+\end{align*}</div><p>The balance equation link
+variables related to the current period with variables related to
+previous periods through the return of the investments. The equation
+for reimbursement (actually not strictly needed, but useful for the sake of clarity) states
+that at time <span class="math notranslate nohighlight">\(t\)</span> we will obtain back what invested  <span class="math notranslate nohighlight">\(\param{Duration}\)</span>
+periods before plus the interest associated to that investment.
+The objective function we used here is equal to the formula of
+reimbursement, except that we do not account for the capital
+reimbursement, but just for the interest gained. In practice, the
+“1. +” term above is omitted.</p>
+<p>In more elaborate cash flow models, even without going to stochastic
+models, several variants and extensions are possible. Sometimes, when
+buying, some extra
+expenses and fees are to be paid, some of which are proportional to
+the purchased amount, while others  are fixed charges.
+A bank might require, as an example, 0.1% of the investment plus a
+fixed charge of 5€ per operation. While the first fee is easy to
+account for, the second one, of a discrete nature, requires the
+introduction of binary variables: fixed charge models will be analyzed
+and modeled in the  section devoted to the <a class="reference internal" href="StructuredMIPmodels.html#sect-fixedcharge"><span class="std std-ref">Fixed Charge problem</span></a>.</p>
+<p>Sometimes also cash grants a tiny interest, which can be easily taken into
+account; sometimes, however, when the cash is allowed to go negative,
+a different, much higher in absolute value, “negative” interest rate
+is paid. This piecewise linear cost function associated to cash
+can be quite easily modeled in this case - how to do this will be
+explained in the section on <a class="reference internal" href="Objectives.html#sect-minmax"><span class="std std-ref">Minimax models</span></a>.
+The minimum level of cash
+might be easily imposed, even if negative. However, sometimes, banks
+apply an even more subtle, and difficult to model, penalty: a fixed
+interest rate is applied to the minimum value of the cash during a
+period (e.g., one year), if that minimum is negative. So, for example,
+if the cash has always been positive except during, say, two periods, when it
+was -5€ and -100€,  not only a negative interest will be
+paid for the -5 and the -100 cash values, but also a different
+penalty will be applied to the -100 value only, disregarding how
+long was the cash at that level. Modeling this is more challenging and
+will not be dealt with here.</p>
+</div></blockquote>
+<p>The structure of many  multi-period problems is that of
+a set of models, even quite complex ones, related to a single period, linked
+through  a few variables and constraints which span different time
+periods and connect decisions taken in different time instants. An
+example was the cash flow application above,  where the  cash balance
+equations link each period with the immediately preceding one, exactly
+as the inventory balance in previous models. In the cash flow example
+the link is to more than one period, thanks to the reimbursement of bonds.
+Quite often the link between different periods is “weak”,
+involving  only a few variables over
+contiguous time periods, or a tiny number of constraints. If we explicitly represented
+the coefficient matrix of the variables, a rather sparse matrix would be obtained
+(that is, with a low percentage of non-null elements); typically this
+coefficient matrix will be almost block diagonal. Each block
+would correspond to  equations and variables related to a
+single period model, with just a few lines whose coefficients belong
+to different blocks. Graphically this situation might be similar to
+that shown in the following figures.</p>
+<div class="figure" style="text-align: center">
+<p><img  src="_images/tikz-82424eab9581f346d9e32defb4fdabbc2b5c6a68.png" alt="Figure made with TikZ" /></p>
+</div><div class="figure" style="text-align: center">
+<p><img  src="_images/tikz-ce9833b4215c1b671b94d59df1d7585778a731a2.png" alt="Figure made with TikZ" /></p>
+</div><p>Models of this kind frequently  reach huge dimensions; cosnider, as an
+example, a multi-period version of the Aluminum blending
+problem. Assume each day we can chose among, say, among 50 scrap types and
+that we wish to take under control 15 chemical elements. If we plan
+for one year, the variables of the problem become <span class="math notranslate nohighlight">\(365 \times 50 =
+18\,250\)</span> and the constraints at least 5475, plus the inventory
+balance equations. This is not considered a large scale
+linear optimization problem, but it is easy to imagine how more
+complex probem may grow in dimension when cast into a multi-period scenario.</p>
+<p>Even when the size of these problems gets huge, however, it is possible to build algorithms which take advantage of
+the particular structure of the constraint matrix, in particular its
+sparsity and its block structure.
+Just to name one of the most well known methods, Bender’s
+decomposition method  <span id="id1">[<a class="reference internal" href="Bibliography.html#id20"><span>6</span></a>]</span> is particularly well suited
+for
+these cases; details on these kinds of methods are out of scope in
+this volume; we just recall that they consist of cycles of “external” iterations, during which
+tentative values are assigned to the variables which link different blocks, followed by “internal” iterations,
+during which the individual subproblems associated to each block are solved
+separately, possibly exploiting parallel computing.</p>
+<p><a class="reference external" href="https://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="CreativeCommonsLicence" src="_images/Cc-by-nc-nd_icon.svg.png" /></a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="BlendingModels.html" title="previous chapter"><span class="section-number">4. </span>Blending Models</a></li>
+      <li>Next: <a href="NetworkFlow.html" title="next chapter"><span class="section-number">6. </span>Network flow models</a></li>
+  </ul></li>
+</ul>
+</div>
+<h3><a href="index.html">Table of Contents</a></h3>
+<p class="caption"><span class="caption-text">Table of Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OptimizationModels.html">1. Preface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LinearModels.html">2. Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ProductMixProblems.html">3. Product Mix Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BlendingModels.html">4. Blending Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">5. Multi Period Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NetworkFlow.html">6. Network flow models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ShortestPath.html">7. Shortest (Minimum Cost) Path Problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MaximumFlow.html">8. Maximum Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transportation.html">9. The transportation model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Assignment.html">10. Assignment or bi-partite matching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dynamic.html">11. Dynamic flows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html">12. Objectives and constraints in optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html#some-nonlinear-problems-that-can-be-transformed-into-linear-ones">13. Some nonlinear problems that can be transformed into linear ones</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Constraints.html">14. Constraints in linear optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StochasticOptimization.html">15. Uncertainty modeling: Stochastic optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MIPModels.html">16. Mixed Integer Linear Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StructuredMIPmodels.html">17. Structured Mixed Integer Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html">18. Knapsack problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#multiple-knapsack-models-bin-packing-cutting-stock">19. Multiple knapsack models, Bin Packing, Cutting Stock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#bin-packing-container-optimization">20. Bin packing -  container optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#plant-location">21. Plant location</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SetCovering.html">22. Set covering, packing, partition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TravelingSalesPerson.html">23. Sequencing problems: the Traveling Salesperson Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quadratic.html">24. Quadratic Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">25. To do</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Bibliography.html">26. Bibliographic References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Version.html">27. Version history</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/MultiPeriodModels.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Fabio Schoen,  Creative Commons Cc-by-nc-nd.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/MultiPeriodModels.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,780 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>15. Uncertainty modeling: Stochastic optimization models &#8212; OptimizationModels 0.8 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script>window.MathJax = "{'tex': { 'macros': {RR: '{\\bf R}', R: '{\\mathbb{R}}', bold: ['{\\bf #1}', 1] }, 'environments': {braced: ['\\left\\{', '\\right\\}'] }, 'inlineMath': [['$', '$'], ['\\(', '\\)']] } }"</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="16. Mixed Integer Linear Models" href="MIPModels.html" />
+    <link rel="prev" title="14. Constraints in linear optimization models" href="Constraints.html" />
+<link rel="stylesheet" type="text/css" 
+     href="_static/custom.css" /> 
+
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <p class="hidden"><span class="math notranslate nohighlight">\(\newcommand{\R}{{\mathbb{R}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\Z}{{\mathbb{Z}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\N}{{\mathbb{N}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\var}[1]{{\color{red}{\mathbf{#1}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\param}[1]{{\color{blue}{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathsc}[1]{{\normalfont\textsc{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\def\sc#1{\dosc#1\csod}\)</span>
+<span class="math notranslate nohighlight">\(\def\dosc#1#2\csod{{\rm{#1{\rm\small #2}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\set}[1]{{\sc#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathvar}[1]{\var{#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\half}{{\small{\frac{1}{2}}}}\)</span></p>
+<section id="uncertainty-modeling-stochastic-optimization-models">
+<span id="section-stochopt"></span><h1><span class="section-number">15. </span>Uncertainty modeling: Stochastic optimization models<a class="headerlink" href="#uncertainty-modeling-stochastic-optimization-models" title="Permalink to this headline">¶</a></h1>
+<p>Dealing with unpredictable events is very hard, but worthwhile: many
+decision can be significantly improved if uncertainty and, in
+particular, variability is taken into correct account. The field is
+very large and indeed complex, and it involves modeling aspects as
+well as algorithmic and deep theoretical analysis. In these pages we
+will just scrap the surface of this important theme, mainly with the
+intent of showing that it is indeed possible to take into
+consideration stochastic events and  also to show that, in some cases,
+the resulting models are still linear ones, obtained thanks to
+modification of standard, deterministic models.</p>
+<section id="probabilistic-constraints">
+<span id="sect-probabilistic-constraints"></span><h2><span class="section-number">15.1. </span>Probabilistic constraints<a class="headerlink" href="#probabilistic-constraints" title="Permalink to this headline">¶</a></h2>
+<p>In many applications  some data are not
+known with precision but, at best, an assumption can be made on a
+probabilistic model. In other words, some data can be viewed as the
+realization of a random variable. In these cases the traditional constraints
+cannot be used anymore. Consider the following  case:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_j \param{a}_j \var{x}_j \leq b
+\end{align*}</div><p>where <span class="math notranslate nohighlight">\(b\)</span> is  a random variable whose
+probability distribution</p>
+<div class="math notranslate nohighlight">
+\[
+F_{b} (y): = P (b \leq y)
+\]</div><p>is assumed to be known.</p>
+<p>When, as in this case, <span class="math notranslate nohighlight">\(b\)</span> is a random variable, the constraint
+is no more well defined, since its right hand side is no more  a
+constant, but a function (recall that a
+<span class="target" id="index-0"></span>random variable is a function from the event space with real values).</p>
+<p>Often in these cases we can subsitute the deterministic constraint
+with a probabilistic one, called a <span class="target" id="index-1"></span>chance constraint:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+P \left (\sum_j \param{a}_j \var{x}_j \leq b \right) \geq \param{\beta}
+\end{align*}</div><p>where <span class="math notranslate nohighlight">\(\param{\beta} \in [0,1]\)</span> $.
+This constraint corresponds to the
+request that the constraint is satisfied with probability at least
+equal to  <span class="math notranslate nohighlight">\(\beta\)</span>,  a given threshold. In general, such a constraint is
+nonlinear and often it is impossible to write it in an explicit form. In
+some cases, however, it is possible to convert it to
+an equivalent regular (deterministic) constraint. This happens in
+particular in  the present case, that is,  when the only random
+variable
+is the right hand side. In fact, using the definition of
+probability distribution, and assuming for simplicity that <span class="math notranslate nohighlight">\(b\)</span>
+is a <em>continuous random variable</em> and, thus, that its distribution
+function is invertible, we obtain:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+   P \left (\sum_j \param{a}_j \var{x}_j \leq b \right) &amp; = 1-P
+   \left (b &lt;\sum_j \param{a}_j \var{x}_j \right)   \\
+   &amp; = 1-P \left (b \leq \sum_j \param{a}_j \var{x}_j \right)  \\
+   &amp; = 1-F_{b} \left (\sum_j \param{a}_j \var{x}_j \right)
+   \geq \param{\beta} &amp; \text{iff}  \\
+   \sum_j \param{a}_j \var{x}_j &amp; \leq F_{b}^{-1} (1- \param{\beta})
+\end{align*}</div><p>The right-hand side of this equation is
+deterministic, so the probabilistic constraint has been transformed
+into a
+traditional (and linear) constraint. As an example, if the
+distribution of <span class="math notranslate nohighlight">\(\param{b}\)</span> can be assumed to be
+uniformly distributed  between two values​  <span class="math notranslate nohighlight">\(\param{b}_{\ell}\)</span>
+and <span class="math notranslate nohighlight">\(\param{b}_{u}\)</span>, after easy calculations we can  deduce the
+deterministic equivalent constraint</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_j \param{a}_j \var{x}_j \leq \param{\beta} \param{b}_{\ell} +
+(1- \param{\beta}) \param{b}_u
+\end{align*}</div><p>If the term <span class="math notranslate nohighlight">\(b\)</span>  was, instead, exponentially distributed with
+parameter <span class="math notranslate nohighlight">\(\lambda\)</span>:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+P (b \leq y) &amp; = 1 - \exp \left (- \param{\lambda} y \right)
+\end{align*}</div><p>for which it is easy to see that</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+F^{-1} (x) &amp; = - \frac{1} {\param{\lambda}} \log (1 - x)
+\end{align*}</div><p>then   the  deterministic equivalent form of the
+constraint would become</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_j \param{a}_j \var{x}_j \leq - \frac{1} {\param{\lambda}} \log (1 - \param{\beta}).
+\end{align*}</div><p>In the frequent case in which the random variable is assumed to be
+normal (gaussian) the procedure is exactly the same, although we need
+to resort to a numerical approximation of the inverse gaussian
+distribution, whose analytical expression is not available.</p>
+<p>Of course the situation becomes significantly more complex when  more
+than one
+coefficient of the same constraint (or of different constraints) is
+random; even more complex is the case in which it is not possible to
+assume stochastic independence among these variables.
+In these cases, it is often impossible to obtain a closed form of a
+deterministic equivalent of the original constraint.</p>
+</section>
+<section id="stochastic-linear-optimization-models">
+<span id="sect-plstoc"></span><h2><span class="section-number">15.2. </span>Stochastic linear optimization models<a class="headerlink" href="#stochastic-linear-optimization-models" title="Permalink to this headline">¶</a></h2>
+<p>It is not possible, in this volume, to present even  a very
+superficial analysis of the probabilistic  optimization models, even
+in the linear case.
+In this section we will just introduce
+elementary models from which it will be possible to understand how, in some cases, it is
+possible to deal with stochastic decision problems using traditional
+optimization  models of the kind
+presented in this volume and how to  solve them with standard
+optimization tools. Of course, this is not always possible: in fact,
+in general,
+the optimization models which arise when
+uncertainty is present can only be transformed  into complex nonlinear
+optimization models.</p>
+<p>Consider  any of the  problems described  up to here
+in the volume: as a typical case, consider a problem of product mix
+problem, as described in section <span class="xref std std-ref">_section:prodmix</span>.
+Assume, differently fro what has been done there, that the demand for
+a product is not known a priori but can at best be
+estimated assuming that a finite set of possible scenarios might
+happen in the future. As an example, assume that a pessimistic scenario,a
+neutral, and an  optimistic one are the only possibilities we can
+foresee.
+In cases like this one, in which uncertainty is linked to a finite set
+of possible scenarios, it is possible to formulate a
+linear optimization model in order to optimize the expected value of
+the objective function (in this case, the expected gain). In order to
+be able to formulate  a deterministic equivalent model, the usual
+technique consists in
+introducing additional variables whose index is  associated with each
+of the possible scenarios.</p>
+<p>We start with the simplest possible case: consider a situation in
+which there is a finite set of different scenarios, indexed by  <span class="math notranslate nohighlight">\(s \in
+\set{Scenarios}\)</span> and, to each scenario, we  associate a known
+probability <span class="math notranslate nohighlight">\(\param{Prob}_s\)</span>. In the product mix example, let us
+also assume that the demand for a certain product is a function of the
+scenario: <span class="math notranslate nohighlight">\(\param{Dem}_s\)</span>.
+The decision on how much to produce needs to be made before knowing
+which of the possible  scenarios will indeed occur, otherwise the
+problem would not be a stochastic one anymore.
+Thus we  have to face a
+decision problem under uncertainty. As in the deterministic case,
+we let <span class="math notranslate nohighlight">\(\var{x}\)</span> denote  the quantity, to be produced: this
+variable is not indexed by the scenario, as its value has to be
+decided a priori, and in an independent way with respect to the future
+actual scenario.
+After the decision has been taken and the real scenario reveals
+itself, it might happen that the quantity produced is insufficient, or
+it might be too much. In the first case,  a penalty
+<span class="math notranslate nohighlight">\(\param{PenIns}\)</span>  will be paid  for each unit of product which
+is  not available to
+satisfy the actual demand; in the other case, a
+penalty  <span class="math notranslate nohighlight">\(\param{PenEcc}\)</span>  will be paid for the disposal of the
+quantity of  product which is in
+excess with respect to the demand.
+As  the scenario which will occur is not known, we need to
+take into account the randomness of the demand by choosing a
+production  level which  minimizes a measure of the future, uncertain,
+cost. It is usual to employ, in these cases, the expected value of the cost of
+production, which is the sum of the cost associated to each possible scenario
+weighted with the probability that such scenario will actually
+occur. In this case,  the model product mix problem model will remain
+exactly the same, except that in the objective function  an additional
+cost term appears:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\param{PenIns} \sum_{s \in \set{Scenarios}} \max (\param{Dem}_s- \var{x}, 0)
+\param{Prob}_s &amp; + \\
+\param{PenEcc} \sum_{s \in \set{Scenarios}} \max (\var{x} - \param{Dem}_s, 0)
+\param{Prob}_s
+\end{align*}</div><p>Although the unknown variable
+appears in a non-linear (even non-differentiable) function, it is easy
+to transform the expression into a fully linear one; it is possible to
+see in the model  the piecewise linear structure already analyzed in
+earlier in this chapter. It is indeed possible to linearize the
+model by introducing additional variables associated with the different
+scenarios. We can also, easily, extend the model to the usual case of
+more than one product. Let <span class="math notranslate nohighlight">\(\var{Surplus}_{ps}\)</span> and
+<span class="math notranslate nohighlight">\(\var{Slack}{ps}\)</span>
+denote two new variable sets
+which, in the various scenarios, represent excess production or
+in default of actual demand of a specific product <span class="math notranslate nohighlight">\(p\)</span>. We can
+add then the following constraints to the model:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{Surplus}_{ps} &amp; \geq \var{x}_p - \param{Dem}_{ps} &amp; \forall \, s
+\in \set{Scenarios}, p \in \set{Products} \\
+\var{Surplus}_{ps} &amp; \geq 0 \\
+\var{Slack}_{ps} &amp; \geq \param{Dem}_{ps} - \var{x}_p &amp; \forall \, s \in
+\set{Scenarios}, p \in \set{Products}  \\
+\var{Slack}_{ps} &amp; \geq 0
+\end{align*}</div><p>and the cost term in the objective can now be reformulated  in a linear way:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_{s \in \set{Scenarios}, p \in \set{Products}} \left(\var{Surplus}_{ps} \param{PenEcc} +
+\var{Slack}_{ps} \param{PenIns}\right) \param{Prob}_s
+\end{align*}</div><p>As an example consider a stochastic product mix problem with the
+following data:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">stoc-prodmix.dat</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">SCENARIOS</span> <span class="o">:=</span> <span class="n">OPT</span> <span class="n">AVG</span> <span class="n">NEG</span><span class="p">;</span>
+
+<span class="n">param</span><span class="p">:</span> <span class="n">RESOURCES</span><span class="p">:</span> <span class="n">Avail</span><span class="o">:=</span>
+<span class="n">carpentry</span>   <span class="mi">1600</span>
+<span class="n">painting</span>    <span class="mi">1200</span>
+<span class="n">assembly</span>    <span class="mi">1500</span>
+<span class="n">verification</span> <span class="mi">300</span>
+<span class="n">packing</span>      <span class="mi">500</span>
+<span class="p">;</span>
+
+<span class="n">param</span><span class="p">:</span> <span class="n">PRODUCTS</span><span class="p">:</span> <span class="n">Gain</span><span class="o">:=</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="mi">10</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="mi">18</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="mi">25</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="mi">27</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="mi">28</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="mi">35</span>
+<span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Consumption</span><span class="p">:</span>
+                <span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="o">:=</span>
+<span class="n">carpentry</span>         <span class="mi">7</span>      <span class="mi">5</span>      <span class="mi">9</span>     <span class="mi">10</span>     <span class="mi">10</span>     <span class="mi">12</span>     <span class="mi">15</span>
+<span class="n">painting</span>          <span class="mi">2</span>      <span class="mi">2</span>      <span class="mi">2</span>      <span class="mi">3</span>      <span class="mi">3</span>      <span class="mi">3</span>      <span class="mi">3</span>
+<span class="n">assembly</span>          <span class="mi">2</span>      <span class="mi">2</span>      <span class="mi">4</span>      <span class="mi">7</span>      <span class="mi">9</span>     <span class="mi">15</span>     <span class="mi">18</span>
+<span class="n">verification</span>      <span class="mi">1</span>      <span class="mi">1</span>      <span class="mi">1</span>      <span class="mi">2</span>      <span class="mi">1</span>      <span class="mi">2</span>      <span class="mi">2</span> 
+<span class="n">packing</span>           <span class="mi">1</span>      <span class="mi">1</span>      <span class="mi">1</span>      <span class="mi">1</span>      <span class="mi">2</span>      <span class="mi">1</span>      <span class="mi">0</span>
+<span class="p">;</span>
+
+
+<span class="n">param</span> <span class="n">PenIns</span> <span class="o">:=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">PenEcc</span> <span class="o">:=</span> <span class="mf">0.1</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Demand</span><span class="p">:</span>
+        <span class="n">OPT</span>  <span class="n">AVG</span>   <span class="n">NEG</span> <span class="o">:=</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span>   <span class="mi">45</span>   <span class="mi">30</span>    <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span>   <span class="mi">60</span>   <span class="mi">30</span>    <span class="mi">25</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span>   <span class="mi">30</span>   <span class="mi">30</span>    <span class="mi">30</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span>   <span class="mi">60</span>   <span class="mi">45</span>    <span class="mi">40</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span>   <span class="mi">40</span>   <span class="mi">20</span>    <span class="mi">10</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span>   <span class="mi">40</span>   <span class="mi">20</span>     <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span>   <span class="mi">20</span>   <span class="mi">5</span>      <span class="mi">2</span>
+<span class="p">;</span>
+
+
+<span class="n">param</span> <span class="n">Prob</span><span class="o">:=</span>
+<span class="n">OPT</span>   <span class="mf">0.3</span>
+<span class="n">AVG</span>   <span class="mf">0.4</span>
+<span class="n">NEG</span>   <span class="mf">0.3</span>
+<span class="p">;</span>
+
+
+</pre></div>
+</div>
+</div>
+<p>In this example there are three possible future scenarios which
+influence the demand for most products (indeed, product 3 has a
+constant forecasted demand, whichever the scenario). We assume that,
+once a quantity is chosen for each product, the scenario becomes known
+and there might be surplus or shortages. The a priori optimization
+problem can be implemented as in the following model:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">stoc-prodmix.mod</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">RESOURCES</span><span class="p">;</span>
+<span class="nb">set</span> <span class="n">PRODUCTS</span><span class="p">;</span>
+<span class="nb">set</span> <span class="n">SCENARIOS</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Gain</span> <span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">Avail</span><span class="p">{</span><span class="n">RESOURCES</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">PenIns</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">PenEcc</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">Demand</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span><span class="n">SCENARIOS</span><span class="p">};</span>
+<span class="n">param</span> <span class="n">Prob</span><span class="p">{</span><span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">,</span> <span class="o">&lt;=</span><span class="mi">1</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">MinQty</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">default</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">MaxQty</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="n">MinQty</span><span class="p">[</span><span class="n">p</span><span class="p">],</span> <span class="n">default</span> <span class="n">Infinity</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Consumption</span> <span class="p">{</span><span class="n">RESOURCES</span><span class="p">,</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="c1">#     consumo di risorse per unita di prodotto</span>
+
+<span class="n">var</span> <span class="n">Qty</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="n">MinQty</span><span class="p">[</span><span class="n">p</span><span class="p">],</span> <span class="o">&lt;=</span> <span class="n">MaxQty</span><span class="p">[</span><span class="n">p</span><span class="p">];</span> 
+<span class="n">var</span> <span class="n">Surplus</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">Slack</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">Sold</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span><span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">;</span>
+
+<span class="n">maximize</span> <span class="n">expected_gain</span><span class="p">:</span>  
+    <span class="nb">sum</span> <span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="n">Gain</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">Sold</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">*</span> <span class="n">Prob</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="o">-</span> <span class="nb">sum</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="p">(</span><span class="n">Prob</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">Surplus</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span><span class="o">*</span><span class="n">PenEcc</span> 
+        <span class="o">+</span> <span class="n">Slack</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span><span class="o">*</span><span class="n">PenIns</span><span class="p">));</span>
+
+<span class="n">subject</span> <span class="n">to</span> <span class="n">max_consumption</span> <span class="p">{</span><span class="n">r</span> <span class="ow">in</span> <span class="n">RESOURCES</span><span class="p">}:</span>
+   <span class="nb">sum</span> <span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">Consumption</span><span class="p">[</span><span class="n">r</span><span class="p">,</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">Qty</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">Avail</span><span class="p">[</span><span class="n">r</span><span class="p">];</span>
+
+<span class="n">subject</span> <span class="n">to</span> <span class="n">def_sold_1</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}:</span>
+	<span class="n">Sold</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">Qty</span><span class="p">[</span><span class="n">p</span><span class="p">];</span> 
+
+<span class="n">subject</span> <span class="n">to</span> <span class="n">def_sold_2</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}:</span>
+	<span class="n">Sold</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">Demand</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">];</span> 
+
+<span class="n">subject</span> <span class="n">to</span> <span class="n">def_surplus</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}:</span>
+    <span class="n">Surplus</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">Qty</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">-</span><span class="n">Demand</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">];</span>
+
+<span class="n">subject</span> <span class="n">to</span> <span class="n">def_slack</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}:</span>
+    <span class="n">Slack</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">Demand</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span><span class="o">-</span><span class="n">Qty</span><span class="p">[</span><span class="n">p</span><span class="p">];</span>
+</pre></div>
+</div>
+</div>
+<p>and, when run and solved through a linear optimization solver, we
+obtain the solution which maximizes the expected gain:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">stoc-prodmix.out</span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Qty</span> <span class="p">[</span><span class="o">*</span><span class="p">]</span> <span class="o">:=</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span>  <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span>  <span class="mi">45</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span>  <span class="mi">30</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span>  <span class="mi">45</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span>  <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span>  <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span>   <span class="mi">5</span>
+<span class="p">;</span>
+
+<span class="p">:</span>          <span class="n">Sold</span> <span class="n">Demand</span> <span class="n">Slack</span> <span class="n">Surplus</span>    <span class="o">:=</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">AVG</span>   <span class="mi">20</span>    <span class="mi">30</span>    <span class="mi">10</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">NEG</span>   <span class="mi">20</span>    <span class="mi">20</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">OPT</span>   <span class="mi">20</span>    <span class="mi">45</span>    <span class="mi">25</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">AVG</span>   <span class="mi">30</span>    <span class="mi">30</span>     <span class="mi">0</span>     <span class="mi">15</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">NEG</span>   <span class="mi">25</span>    <span class="mi">25</span>     <span class="mi">0</span>     <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">OPT</span>   <span class="mi">45</span>    <span class="mi">60</span>    <span class="mi">15</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">AVG</span>   <span class="mi">30</span>    <span class="mi">30</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">NEG</span>   <span class="mi">30</span>    <span class="mi">30</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">OPT</span>   <span class="mi">30</span>    <span class="mi">30</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">AVG</span>   <span class="mi">45</span>    <span class="mi">45</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">NEG</span>   <span class="mi">40</span>    <span class="mi">40</span>     <span class="mi">0</span>      <span class="mi">5</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">OPT</span>   <span class="mi">45</span>    <span class="mi">60</span>    <span class="mi">15</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">AVG</span>   <span class="mi">20</span>    <span class="mi">20</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">NEG</span>   <span class="mi">10</span>    <span class="mi">10</span>     <span class="mi">0</span>     <span class="mi">10</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">OPT</span>   <span class="mi">20</span>    <span class="mi">40</span>    <span class="mi">20</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">AVG</span>   <span class="mi">20</span>    <span class="mi">20</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">NEG</span>    <span class="mi">0</span>     <span class="mi">0</span>     <span class="mi">0</span>     <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">OPT</span>   <span class="mi">20</span>    <span class="mi">40</span>    <span class="mi">20</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="n">AVG</span>    <span class="mi">5</span>     <span class="mi">5</span>     <span class="mi">0</span>      <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="n">NEG</span>    <span class="mi">2</span>     <span class="mi">2</span>     <span class="mi">0</span>      <span class="mi">3</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="n">OPT</span>    <span class="mi">5</span>    <span class="mi">20</span>    <span class="mi">15</span>      <span class="mi">0</span>
+<span class="p">;</span>
+
+<span class="n">expected_gain</span> <span class="o">=</span> <span class="mf">3436.66</span>
+
+</pre></div>
+</div>
+</div>
+<p>If, as it is quite common a  practice, the demand in the different
+scenarios is averaged, we might wish to solve a product mix problem
+using the expected demand as it was the real one. However, differently
+from the generic product mix problem introduced earlier in this
+volume, we should take into account the fact that some demand might be
+unsatisfied, as the limited availability of resources does not allow
+to produce all what is (expected) to be required. In this case we can
+modify the basic model and introduce a penalty for unsatisfied demand;
+on the other hand, in a deterministic product mix model there will be
+no surplus, as there would be no reason to produce in excess of the
+(expected) demand. Running this model we apparently obtain a gain
+which is superior to the expected one in the model seen before. But if
+we fix the order quantities and compute the expected gain under the
+three scenarios, we obtain the following:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">det-prodmix.out</span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Qty</span> <span class="p">[</span><span class="o">*</span><span class="p">]</span> <span class="o">:=</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span>   <span class="mf">9.07143</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span>  <span class="mf">37.5</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span>  <span class="mi">30</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span>  <span class="mi">48</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span>  <span class="mi">23</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span>  <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span>   <span class="mf">8.6</span>
+<span class="p">;</span>
+
+<span class="p">:</span>              <span class="n">Sold</span>   <span class="n">Demand</span>    <span class="n">Slack</span>  <span class="n">Surplus</span>    <span class="o">:=</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">AVG</span>    <span class="mf">9.07143</span>    <span class="mi">30</span>    <span class="mf">20.9286</span>    <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">NEG</span>    <span class="mf">9.07143</span>    <span class="mi">20</span>    <span class="mf">10.9286</span>    <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">1</span> <span class="n">OPT</span>    <span class="mf">9.07143</span>    <span class="mi">45</span>    <span class="mf">35.9286</span>    <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">AVG</span>   <span class="mi">30</span>          <span class="mi">30</span>     <span class="mi">0</span>         <span class="mf">7.5</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">NEG</span>   <span class="mi">25</span>          <span class="mi">25</span>     <span class="mi">0</span>        <span class="mf">12.5</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">2</span> <span class="n">OPT</span>   <span class="mf">37.5</span>        <span class="mi">60</span>    <span class="mf">22.5</span>       <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">AVG</span>   <span class="mi">30</span>          <span class="mi">30</span>     <span class="mi">0</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">NEG</span>   <span class="mi">30</span>          <span class="mi">30</span>     <span class="mi">0</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">3</span> <span class="n">OPT</span>   <span class="mi">30</span>          <span class="mi">30</span>     <span class="mi">0</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">AVG</span>   <span class="mi">45</span>          <span class="mi">45</span>     <span class="mi">0</span>         <span class="mi">3</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">NEG</span>   <span class="mi">40</span>          <span class="mi">40</span>     <span class="mi">0</span>         <span class="mi">8</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">4</span> <span class="n">OPT</span>   <span class="mi">48</span>          <span class="mi">60</span>    <span class="mi">12</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">AVG</span>   <span class="mi">20</span>          <span class="mi">20</span>     <span class="mi">0</span>         <span class="mi">3</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">NEG</span>   <span class="mi">10</span>          <span class="mi">10</span>     <span class="mi">0</span>        <span class="mi">13</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">5</span> <span class="n">OPT</span>   <span class="mi">23</span>          <span class="mi">40</span>    <span class="mi">17</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">AVG</span>   <span class="mi">20</span>          <span class="mi">20</span>     <span class="mi">0</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">NEG</span>    <span class="mi">0</span>           <span class="mi">0</span>     <span class="mi">0</span>        <span class="mi">20</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">6</span> <span class="n">OPT</span>   <span class="mi">20</span>          <span class="mi">40</span>    <span class="mi">20</span>         <span class="mi">0</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="n">AVG</span>    <span class="mi">5</span>           <span class="mi">5</span>     <span class="mi">0</span>         <span class="mf">3.6</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="n">NEG</span>    <span class="mi">2</span>           <span class="mi">2</span>     <span class="mi">0</span>         <span class="mf">6.6</span>
+<span class="n">prod</span><span class="o">-</span><span class="mi">7</span> <span class="n">OPT</span>    <span class="mf">8.6</span>        <span class="mi">20</span>    <span class="mf">11.4</span>       <span class="mi">0</span>
+<span class="p">;</span>
+
+<span class="n">expected_gain</span> <span class="o">=</span> <span class="mf">3361.03</span>
+
+</pre></div>
+</div>
+</div>
+<p>and we can see that indeed this produces a smaller expected gain: in
+general it is not wise to substitute the expected demand with the
+stochastic one. Among many other motivations, substituting the
+stochastic nature of a random variable with its expectation completely
+neglects the variability, which is one of the most relevant
+characteristics of stochastic variables. In general, taking into
+proper account probability distributions when dealing with stochastic
+phenomena generates much more reliable and efficient decisions.
+Of course, this improved quality comes at the price of an increased
+complexity, both in data collection (as we need to retrieve
+information on all possible scenarios) and in model development.</p>
+<p>The example just presented is very simple and concerns a deterministic
+decision which must be taken now, given possible future scenarios; in
+the example, no other decision is taken after the scenarios
+reveals. There are indeed variables which depend on the scenario, but
+these are just direct consequences of the original choices and of the
+characteristics of the scenario.</p>
+<p>In many cases, in practical applications, decisions are taken
+sequentially: a first decision is taken, as we did above, then a
+scenario occurs and a second-stage decision, possibly containing a
+correction of the previous one, is taken; after that other scenarios
+will occur, and so on. This situation frequently occurs, e.g., in
+prime material procurement: in textile production, as an example, we
+might need to decide now how much of some special tissue to buy right
+now, taking into account long lead and transportation  times. Then,
+after the buying agreement has been signed and possibly paid, some
+events, like fairs or exhibitions, take place and the situation of the
+future market might become less uncertain. At this point if, as an
+example, it is likely that the market is ready to buy more finished
+product than originally planned, new, usually more expensive, prime
+material can be bought from nearby producers. This second stage
+decision depends on the original one and on the scenario which has
+been revealed. Eventually, the real demand is observed.</p>
+<p>Quite a similar situation happens in agriculture. Consider the
+following atficial example:</p>
+<dl class="field-list">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-2"></span>Stochastic farm problem</p>
+<p>This application is taken from the introductory chapters of
+<span id="id1">[<a class="reference internal" href="Bibliography.html#id25"><span>7</span></a>]</span> to which we address the reader interested in a good
+introduction to the theory and methods of stochastic optimization.
+Assume a farmer has a quantity of acres of land available and that a decision
+has to be taken about how much how the available land to devote to Wheat, Corn, Beans.
+This decision has to be taken now.
+In order to run the farm and feed the cattle it would be necessary to harvest a
+minimum quantity of wheat and corn (200t and 240t,
+respectively). One of the difficulties is that the exact yield
+is uncertain, due to possibly different future weather conditions;
+however, in any case, the exact future yield
+is related to the quantity of land devoted to that
+cultivation. If needed, it is always possible to buy additional wheat
+and corn, or it is possible  to sell it, if it is in excess. For what concerns
+beans, these are possibly grown only for sale (they are not needed
+for the cattle), so there is no
+minimum requirement.</p>
+<p>We assume that future scenarios will be bad, average, good, and
+that the scenario will directly influence the yield of each
+product. In this simplified example, we assume prices are not
+sensible to the scenarios, although it might be interesting to add
+this possibility. The three scenarios are assumed to occur with
+equal probability. The relevant data is contained in the following
+data file:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">stoc-farm.dat</span><a class="headerlink" href="#id6" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">PRODUCTS</span> <span class="o">:=</span> <span class="n">Wheat</span> <span class="n">Corn</span> <span class="n">Beans</span><span class="p">;</span>
+<span class="nb">set</span> <span class="n">SCENARIOS</span> <span class="o">:=</span> <span class="n">Bad</span> <span class="n">Avg</span> <span class="n">Good</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">TotalLand</span> <span class="o">:=</span> <span class="mi">500</span><span class="p">;</span>
+
+<span class="n">param</span><span class="p">:</span> <span class="n">MinReq</span>  <span class="n">SellPrice</span> <span class="n">BuyingCost</span>  <span class="n">PlantingCost</span> <span class="o">:=</span>
+<span class="n">Wheat</span>    <span class="mi">200</span>     <span class="mi">170</span>       <span class="mi">238</span>           <span class="mi">150</span>
+<span class="n">Corn</span>     <span class="mi">240</span>     <span class="mi">150</span>       <span class="mi">210</span>           <span class="mi">230</span>
+<span class="n">Beans</span>      <span class="mi">0</span>      <span class="mi">36</span>         <span class="o">.</span>           <span class="mi">260</span>
+<span class="p">;</span>
+
+<span class="n">param</span> <span class="n">MaxBuy</span><span class="o">:=</span>
+	<span class="n">Beans</span> <span class="mi">0</span>
+<span class="p">;</span>
+<span class="n">param</span> <span class="n">MaxSell</span><span class="o">:=</span>
+	<span class="n">Beans</span> <span class="mi">6000</span>
+<span class="p">;</span>
+
+
+<span class="n">param</span> <span class="n">Yield</span><span class="p">:</span>
+	<span class="n">Bad</span>   <span class="n">Avg</span>   <span class="n">Good</span> <span class="o">:=</span>
+<span class="n">Wheat</span>    <span class="mi">2</span>     <span class="mf">2.5</span>   <span class="mi">3</span>
+<span class="n">Corn</span>     <span class="mf">2.4</span>   <span class="mi">3</span>     <span class="mf">3.6</span>
+<span class="n">Beans</span>   <span class="mi">16</span>    <span class="mi">20</span>    <span class="mi">24</span>
+<span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Prob</span><span class="o">:=</span>
+<span class="n">Bad</span>  <span class="mf">0.333333</span>
+<span class="n">Avg</span>  <span class="mf">0.333334</span>
+<span class="n">Good</span> <span class="mf">0.333333</span>
+<span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<p>The model is again quite similar to a product mix. We choose to add
+an extra variable to the model whose value is the
+effective product quantity, as a function of the yield. This is not
+necessary, indeed, but just increases the readability of the
+model.
+Moreover we introduced, in the balance equation, also another
+variable, <span class="math notranslate nohighlight">\(\var{ExtraSell}\)</span> to model possible extra
+production which cannot be sold, as the market is not capable of
+absorbing it. In the example, this happens for Beans, for which a
+maximum demand is imposed equal to 6000; if, based on the acres
+devoted to Beans, in a scenario the yield turns out to be more than
+this quantity, the excess production will not contribute to any
+profit in the objective function: it will thus be a waste, a pure
+cost.</p>
+<p>As it can be seen in the implementation, the main variable
+is not  indexed by the  scenario, as the decision about land
+subdivision is a <em>first stage</em> decision, to be taken now:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">stoc-farm.mod</span><a class="headerlink" href="#id7" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">PRODUCTS</span><span class="p">;</span>
+<span class="nb">set</span> <span class="n">SCENARIOS</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Prob</span><span class="p">{</span><span class="n">SCENARIOS</span><span class="p">};</span>
+
+<span class="n">param</span> <span class="n">TotalLand</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">MinReq</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">};</span>  <span class="c1"># tons</span>
+<span class="n">param</span> <span class="n">MaxBuy</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">default</span> <span class="n">Infinity</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">MaxSell</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">default</span> <span class="n">Infinity</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">SellPrice</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">default</span> <span class="mi">0</span><span class="p">;</span> <span class="c1"># euro pr ton</span>
+<span class="n">param</span> <span class="n">BuyingCost</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">default</span> <span class="n">Infinity</span><span class="p">;</span> <span class="c1"># euro per ton</span>
+<span class="n">param</span> <span class="n">Yield</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span><span class="n">SCENARIOS</span><span class="p">};</span> <span class="c1">#tone per acre</span>
+<span class="n">param</span> <span class="n">PlantingCost</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">};</span> <span class="c1"># euro per acre</span>
+
+<span class="n">var</span> <span class="n">x</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">,</span> <span class="o">&lt;=</span> <span class="n">TotalLand</span><span class="p">;</span>  <span class="c1"># acres per product</span>
+<span class="n">var</span> <span class="n">Sell</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&lt;=</span> <span class="n">MaxSell</span><span class="p">[</span><span class="n">p</span><span class="p">];</span> <span class="c1"># excess tons of products to be sold</span>
+<span class="n">var</span> <span class="n">Buy</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&lt;=</span> <span class="n">MaxBuy</span><span class="p">[</span><span class="n">p</span><span class="p">];</span> <span class="c1"># excess tons of products to be bought</span>
+<span class="n">var</span> <span class="n">Production</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span><span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span><span class="mi">0</span> <span class="p">;</span>
+<span class="n">var</span> <span class="n">ExtraSell</span><span class="p">{</span><span class="n">PRODUCTS</span><span class="p">,</span><span class="n">SCENARIOS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">maximize</span> <span class="n">TotalGain</span><span class="p">:</span> <span class="nb">sum</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}</span> <span class="n">Prob</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">SellPrice</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">Sell</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">PlantingCost</span><span class="p">[</span><span class="n">p</span><span class="p">])</span>
+                    <span class="o">-</span> <span class="nb">sum</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">:</span> <span class="n">BuyingCost</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">!=</span> <span class="n">Infinity</span><span class="p">}</span> <span class="n">Prob</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">*</span> <span class="n">BuyingCost</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">Buy</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">];</span> 
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">TotalAcres</span><span class="p">:</span>
+	<span class="nb">sum</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">}</span> <span class="n">x</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">TotalLand</span><span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">Balance</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}:</span>
+	<span class="n">Production</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">-</span> <span class="n">Sell</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">-</span><span class="n">ExtraSell</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">+</span> <span class="n">Buy</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">MinReq</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">defProd</span><span class="p">{</span><span class="n">p</span> <span class="ow">in</span> <span class="n">PRODUCTS</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCENARIOS</span><span class="p">}:</span>
+	<span class="n">Production</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">Yield</span><span class="p">[</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">];</span>
+</pre></div>
+</div>
+</div>
+<p>After the main decision is taken and the scenario becomes known,
+the <em>second stage</em> or <span class="target" id="index-3"></span>recourse actions need to be taken:
+depending on the actual yield, some product quantity will be
+purchased or sold.  The constraints of the model are simply the
+request not to exceed the total available land and a set of balance
+equations for the definition of possibly excess or defect
+production, with respect to the demand. The objective function is
+the weighted average of the total gain (revenues minus costs) in
+the scenarios, weighted with the probability of each scenario.</p>
+<p>With these data, the optimal solution, taking into account the
+randomness of scenarios, is the following:</p>
+<div class="highlight-ampl notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">stoc-farm.out</span><a class="headerlink" href="#id8" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>CBC 2.10.3: CBC 2.10.3 optimal, objective 108390.001
+9 iterations
+
+
+Scenario: Bad
+
+	Prod 	Sell	Buy	Demand	Acres 	Yield 	
+Wheat:	 340	 140	 0	 200	 170	 2	
+Corn:	 192	 0	 48	 240	 80	 2	
+Beans:	 4000	 4000	 0	 0	 250	 16	
+
+
+Scenario: Avg
+
+	Prod 	Sell	Buy	Demand	Acres 	Yield 	
+Wheat:	 425	 225	 0	 200	 170	 2	
+Corn:	 240	 0	 0	 240	 80	 3	
+Beans:	 5000	 5000	 0	 0	 250	 20	
+
+
+Scenario: Good
+
+	Prod 	Sell	Buy	Demand	Acres 	Yield 	
+Wheat:	 510	 310	 0	 200	 170	 3	
+Corn:	 288	 48	 0	 240	 80	 4	
+Beans:	 6000	 6000	 0	 0	 250	 24	
+</pre></div>
+</div>
+</div>
+<p>It is possible to see that the second stage decision on how much to
+buy or sell is quite easily understandable: we sell excess
+production, and buy any product which is needed. So there is no
+real difficulty, in this case, in planning the second stage
+decision. What is really strategic is to be able to take these
+recourse actions into due considerations so that the initial choice
+is made in a profitable way. If we changed the conditions, e.g., to
+that of an average scenario (this is simple to obtain by letting
+the probability of this scenario to be 1), we obtain a land
+destination of 120 acres to Wheat, 80 to Corn, the remaining 300 to
+Beans, with an overproduction of 100t of Wheat to be sold. The
+profit obtainable in this case is <span class="math notranslate nohighlight">\(118\,600\)</span>, which apparently is much
+more convenient that the optimal one, obtained in the stochastic
+case, <span class="math notranslate nohighlight">\(108\,390\)</span>. However this is not true. If, in fact, the
+unpredictable nature of scenarios is taken into correct account,
+there is no more an advantage in using the average scenario. In
+fact, fixing the quantity of land as in the average scenario, takin
+into account the three different possibilities,   it turns out that
+the expected return will be only
+<span class="math notranslate nohighlight">\(103\,240.0154\)</span> with a loss of roughly 5% with respect to
+the stochastic decision.</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Constraints.html" title="previous chapter"><span class="section-number">14. </span>Constraints in linear optimization models</a></li>
+      <li>Next: <a href="MIPModels.html" title="next chapter"><span class="section-number">16. </span>Mixed Integer Linear Models</a></li>
+  </ul></li>
+</ul>
+</div>
+<h3><a href="index.html">Table of Contents</a></h3>
+<p class="caption"><span class="caption-text">Table of Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OptimizationModels.html">1. Preface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LinearModels.html">2. Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ProductMixProblems.html">3. Product Mix Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BlendingModels.html">4. Blending Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPeriodModels.html">5. Multi Period Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NetworkFlow.html">6. Network flow models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ShortestPath.html">7. Shortest (Minimum Cost) Path Problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MaximumFlow.html">8. Maximum Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transportation.html">9. The transportation model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Assignment.html">10. Assignment or bi-partite matching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dynamic.html">11. Dynamic flows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html">12. Objectives and constraints in optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html#some-nonlinear-problems-that-can-be-transformed-into-linear-ones">13. Some nonlinear problems that can be transformed into linear ones</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Constraints.html">14. Constraints in linear optimization models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">15. Uncertainty modeling: Stochastic optimization models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#probabilistic-constraints">15.1. Probabilistic constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stochastic-linear-optimization-models">15.2. Stochastic linear optimization models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="MIPModels.html">16. Mixed Integer Linear Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StructuredMIPmodels.html">17. Structured Mixed Integer Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html">18. Knapsack problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#multiple-knapsack-models-bin-packing-cutting-stock">19. Multiple knapsack models, Bin Packing, Cutting Stock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#bin-packing-container-optimization">20. Bin packing -  container optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#plant-location">21. Plant location</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SetCovering.html">22. Set covering, packing, partition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TravelingSalesPerson.html">23. Sequencing problems: the Traveling Salesperson Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quadratic.html">24. Quadratic Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">25. To do</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Bibliography.html">26. Bibliographic References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Version.html">27. Version history</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/StochasticOptimization.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Fabio Schoen,  Creative Commons Cc-by-nc-nd.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/StochasticOptimization.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

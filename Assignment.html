@@ -1,0 +1,812 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>10. Assignment or bi-partite matching &#8212; OptimizationModels 0.8 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/tabs.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script>window.MathJax = "{'tex': { 'macros': {RR: '{\\bf R}', R: '{\\mathbb{R}}', bold: ['{\\bf #1}', 1] }, 'environments': {braced: ['\\left\\{', '\\right\\}'] }, 'inlineMath': [['$', '$'], ['\\(', '\\)']] } }"</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="11. Dynamic flows" href="Dynamic.html" />
+    <link rel="prev" title="9. The transportation model" href="Transportation.html" />
+<link rel="stylesheet" type="text/css" 
+     href="_static/custom.css" /> 
+
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <p class="hidden"><span class="math notranslate nohighlight">\(\newcommand{\R}{{\mathbb{R}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\Z}{{\mathbb{Z}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\N}{{\mathbb{N}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\var}[1]{{\color{red}{\mathbf{#1}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\param}[1]{{\color{blue}{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathsc}[1]{{\normalfont\textsc{#1}}}\)</span>
+<span class="math notranslate nohighlight">\(\def\sc#1{\dosc#1\csod}\)</span>
+<span class="math notranslate nohighlight">\(\def\dosc#1#2\csod{{\rm{#1{\rm\small #2}}}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\set}[1]{{\sc#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\mathvar}[1]{\var{#1}}\)</span>
+<span class="math notranslate nohighlight">\(\newcommand{\half}{{\small{\frac{1}{2}}}}\)</span></p>
+<section id="assignment-or-bi-partite-matching">
+<h1><span class="section-number">10. </span>Assignment or bi-partite matching<a class="headerlink" href="#assignment-or-bi-partite-matching" title="Permalink to this headline">¶</a></h1>
+<p>An important special case of the
+minimum cost flow problem and, in particular, the transportation problem, is the
+so called <em>assignment</em> problem on bi-partite graphs,
+also called <em>matching</em> problem. In its basic formulation, this is just
+a transportation model in which the cardinality of the set of origin
+nodes is exactly equal to that of the destination ones, and the both
+production as well as demand are equal to one.</p>
+<p>A  feasible matching consists of a subgraph in which
+each node in the origin node set is adjacent to one and only one node
+of the destination set. In
+practice an assignment, or matching, is a one-to-one correspondence between
+the nodes of the bi-partition. If a weight, or cost, is associated
+with each arc,
+the problem becomes that  of finding the minimum total cost feasible
+assignment.</p>
+<p>If  there were more origin than destination nodes,
+the model might be employed to find a one-to-one correspondence  between a
+subset of sources  with the destination nodes.
+It is of course possible to  consider situations  in which the bi-partite graph is not
+complete, i.e. not all source nodes are connected with all
+target nodes. In these cases it is not generally granted  a priori that the
+assignment problem has a solution.</p>
+<p>In the most common case, in which origin nodes are as many as the destinations
+the assignment model might  be formulated as follows:</p>
+<dl class="field-list simple">
+<dt class="field-odd">model</dt>
+<dd class="field-odd"><p>Assignment (or bi-partite matching)</p>
+</dd>
+</dl>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Sets:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\set{Orig}\)</span>: set of origin nodes</p></li>
+<li><p><span class="math notranslate nohighlight">\(\set{Dest}\)</span>: set of destination nodes</p></li>
+<li><dl class="simple">
+<dt><span class="math notranslate nohighlight">\(\set{E} \subseteq \set{Orig} \times \set{Dest}\)</span>: set of</dt><dd><p>directed arcs</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Parameters:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\param{Cost}_{ij}\)</span>: cost of matching node <span class="math notranslate nohighlight">\(i \in \set{Orig}\)</span> and
+node <span class="math notranslate nohighlight">\(j \in \set{Dest}\)</span></p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Variables:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\var{f}_{ij}\)</span>: flow from node <span class="math notranslate nohighlight">\(i\)</span> to node <span class="math notranslate nohighlight">\(j\)</span>.</p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Constraints:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul>
+<li><p>A single input arc for each destination node:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_{i \in \set{Orig}: (i, j) \in \set{E}} \var{f}_{ij} &amp;=
+1 &amp; \forall \, j \in \set{Dest}
+\end{align*}</div></li>
+<li><p>A single arc  from each source node:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_{j \in \set{Dest}: (i, j) \in \set{E}} \var{f}_{ij} &amp;= 1
+&amp; \forall \, i \in \set{Orig}
+\end{align*}</div></li>
+<li><p>item Non negativity:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{f}_{ij} &amp;\geq 0 &amp; \forall \, (i, j) \in \set{E}
+\end{align*}</div></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Objective:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul>
+<li><p>Minimization of the total matching cost:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\min \sum_{(i, j) \in E} \param{Cost}_{ij} \var{f}_{ij}
+\end{align*}</div></li>
+</ul>
+</div></blockquote>
+<p>In this model, since the supply and demand of each node
+are equal to one and the model is a special case of
+of the transportation one, in each basic feasible solution all variables will
+be    binary. Binary variables <span class="math notranslate nohighlight">\(\var{f}_{ij}\)</span> correspond to the
+indicator variables of  a selection of arcs.</p>
+<p>The particular structure of the assignment problem makes it
+possible to design specialized algorithms which are by far
+more efficient than the simplex. If we consider an example of a problem
+with one thousand nodes in each element of the
+bi-partition, the linear formulation just introduced would require
+one million variables, of which only one thousand would be
+non-zero in the optimal solution.</p>
+<p>An apparently minor variant of the assignment problem
+concerns models based on non-bipartite graphs: as an example,
+consider the problem of defining a calendar
+of tennis matches, on which it is necessary to  pair players in
+order to  optimize some function (e.g., the audience): in this case there exist no
+natural bi-partition of players. The model can be
+formulated in very similar way:</p>
+<dl class="field-list simple">
+<dt class="field-odd">model</dt>
+<dd class="field-odd"><p>Non bi-partite matching</p>
+</dd>
+</dl>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Sets:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\set{V}\)</span>: set of nodes</p></li>
+<li><p><span class="math notranslate nohighlight">\(\set{E} \subseteq \set{V} \times \set{V}\)</span>: set of
+arcs (not directed)</p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Parameters:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\param{Cost}_{e}\)</span>: cost of matching nodes <span class="math notranslate nohighlight">\(i \in \set{V}\)</span> and
+<span class="math notranslate nohighlight">\(j \in \set{V}\)</span>, with <span class="math notranslate nohighlight">\(e = \{i,j\}\)</span></p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Variables:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\var{f}_{e}\)</span>: match between the nodes of
+arc <span class="math notranslate nohighlight">\(e \in \set{E}\)</span>.</p></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Constraints:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul>
+<li><p>A single arc is incident to each node:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\sum_{e  \in \set{E}: i \in e} \var{f}_{e} &amp;=
+1 &amp; \forall \, i \in \set{V}
+\end{align*}</div></li>
+<li><p>item Binary variables:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{f}_{e} &amp; \in \{0,1\} &amp; \forall \, e \in \set{E}
+\end{align*}</div></li>
+</ul>
+</div></blockquote>
+<div class="line-block">
+<div class="line"><span class="smallcaps">Objective:</span></div>
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ul>
+<li><p>Minimization of the total matching cost:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\min \sum_{e \in E} \param{Cost}_{e} \var{f}_{e}
+\end{align*}</div></li>
+</ul>
+</div></blockquote>
+<p>In this case the problem is no longer a special case of the
+general  minimum cost network flow problem, and the integrality of
+basic feasible solutions, with this formulation, can no longer be
+guaranteed. However,
+the problem can be very efficiently solved
+through specialized algorithms  <span id="id1">[<a class="reference internal" href="Bibliography.html#id14"><span>13</span></a>]</span>.</p>
+<p>Bi-partite assignment models  find application  in many different applications.
+One of  the  classical ones concerns the problem of deciding, given a group of students
+and a set of projects, how to assign students to each
+project; the cost might be a preference index expressed by each
+student  on the  individual projects. Another direct application is
+that of assigning some tasks to a group of persons, knowing that
+assigning a specific task to a person has a  cost for the company (e.g.
+example, the cost of training) or requires some amount of time which
+is different for different pairings.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-0"></span>Shift/staff matching</p>
+</dd>
+</dl>
+<p>Many organizations, like, e.g., hospitals, assign shifts to their
+staff so that a sufficient coverage of the required personnel type is
+available in every period of the planning horizon. The problem of
+optimally  planning shifts for a company is, as anyone can easily imagine,
+a very complex one; a simplified version of the problem of deciding
+which type, and in which quantity, of shifts to plan will be the
+subject of a specific model, called covering, which will be presented in
+chapter <a class="reference internal" href="SetCovering.html#set-covering"><span class="std std-ref">Set covering, packing, partition</span></a>.  Once the required shifts have been established
+it is necessary to proceed with assignin each unit of personnel to the
+scheduled shift. A possible implementation in this case might be that
+of presenting to each  employee
+the list of shifts  to be  covered:
+each worker, according to personal needs and preferences, will
+indicate a  preference or a ranking. As an example, value 1 will be
+assigned to  the preferred shift, 2 on the second choice and so on up
+to the least liked shift. These preference indices can be
+considered as costs in an assignment problem between the nodes
+“employee” and the nodes “shift”. The optimal solution of the
+assignment problem
+will then provide a worker / shift match which
+maximizes the total preference index given by the sum of the
+individual preferences.</p>
+<p>As an example, with the following assignment model:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-0-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-0-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-0-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-0-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">assignment.mod</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">ORIGINS</span><span class="p">;</span>
+<span class="nb">set</span> <span class="n">DESTINATIONS</span><span class="p">;</span>
+
+<span class="nb">set</span> <span class="n">ARCS</span> <span class="o">:=</span> <span class="n">ORIGINS</span> <span class="n">cross</span> <span class="n">DESTINATIONS</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Cost</span> <span class="p">{</span><span class="n">ARCS</span><span class="p">};</span>
+
+<span class="n">var</span> <span class="n">Assign</span><span class="p">{</span><span class="n">ARCS</span><span class="p">}</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">minimize</span> <span class="n">minCost</span><span class="p">:</span>
+	<span class="nb">sum</span><span class="p">{(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ARCS</span><span class="p">}</span> <span class="n">Cost</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Assign</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">];</span>  
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">Out</span><span class="p">{</span><span class="n">i</span> <span class="ow">in</span> <span class="n">ORIGINS</span><span class="p">}:</span>
+	<span class="nb">sum</span><span class="p">{</span><span class="n">j</span> <span class="ow">in</span> <span class="n">DESTINATIONS</span><span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ARCS</span><span class="p">}</span> <span class="n">Assign</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="n">s</span><span class="o">.</span><span class="n">t</span><span class="o">.</span> <span class="n">In</span><span class="p">{</span><span class="n">j</span> <span class="ow">in</span> <span class="n">DESTINATIONS</span><span class="p">}:</span>
+	<span class="nb">sum</span><span class="p">{</span><span class="n">i</span> <span class="ow">in</span> <span class="n">ORIGINS</span><span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ARCS</span><span class="p">}</span> <span class="n">Assign</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-0-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">assignment.jl</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># to be done</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>and the following data</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-1-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-1-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-1-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-1-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">assignment.dat</span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">ORIGINS</span> <span class="o">:=</span> <span class="n">A</span> <span class="n">B</span> <span class="n">C</span> <span class="n">D</span> <span class="n">E</span> <span class="n">F</span> <span class="n">G</span><span class="p">;</span>
+
+<span class="nb">set</span> <span class="n">DESTINATIONS</span><span class="o">:=</span> <span class="n">Shift1</span> <span class="n">Shift2</span> <span class="n">Shift3</span> <span class="n">Shift4</span> <span class="n">Shift5</span> <span class="n">Shift6</span> <span class="n">Shift7</span><span class="p">;</span>
+
+<span class="c1">#Preferences - 1: most preferred, 7 least preferred</span>
+
+<span class="n">param</span> <span class="n">Cost</span><span class="p">:</span> <span class="n">Shift1</span> <span class="n">Shift2</span> <span class="n">Shift3</span> <span class="n">Shift4</span> <span class="n">Shift5</span> <span class="n">Shift6</span> <span class="n">Shift7</span> <span class="o">:=</span>
+         <span class="n">A</span>   <span class="mi">5</span>      <span class="mi">3</span>      <span class="mi">2</span>      <span class="mi">4</span>      <span class="mi">7</span>      <span class="mi">6</span>      <span class="mi">1</span>
+         <span class="n">B</span>   <span class="mi">5</span>      <span class="mi">4</span>      <span class="mi">7</span>      <span class="mi">2</span>      <span class="mi">3</span>      <span class="mi">1</span>      <span class="mi">6</span>
+         <span class="n">C</span>   <span class="mi">1</span>      <span class="mi">3</span>      <span class="mi">2</span>      <span class="mi">4</span>      <span class="mi">6</span>      <span class="mi">5</span>      <span class="mi">7</span>
+         <span class="n">D</span>   <span class="mi">7</span>      <span class="mi">1</span>      <span class="mi">5</span>      <span class="mi">3</span>      <span class="mi">4</span>      <span class="mi">6</span>      <span class="mi">2</span>
+         <span class="n">E</span>   <span class="mi">2</span>      <span class="mi">4</span>      <span class="mi">3</span>      <span class="mi">1</span>      <span class="mi">5</span>      <span class="mi">7</span>      <span class="mi">6</span>
+         <span class="n">F</span>   <span class="mi">5</span>      <span class="mi">6</span>      <span class="mi">7</span>      <span class="mi">1</span>      <span class="mi">4</span>      <span class="mi">3</span>      <span class="mi">2</span>
+         <span class="n">G</span>   <span class="mi">3</span>      <span class="mi">4</span>      <span class="mi">7</span>      <span class="mi">5</span>      <span class="mi">6</span>      <span class="mi">2</span>      <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-1-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">assignment.dat</span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># to be done</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>the solver determines the following optimal solution:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\begin{array}{l|ccccccc}
+   &amp; \multicolumn{7}{c}{Shifts} \\
+  &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5 &amp; 6 &amp; 7 \\ \hline
+  A&amp;  &amp;   &amp; 2  &amp;   &amp;   &amp;   &amp;   \\
+  B&amp;  &amp;   &amp;    &amp;   &amp;   &amp; 1 &amp;   \\
+  C&amp;1 &amp;   &amp;   &amp;   &amp;   &amp;   &amp;   \\
+  D&amp;  &amp; 1 &amp;   &amp;   &amp;   &amp;   &amp;   \\
+  E&amp;  &amp;   &amp;   &amp; 1 &amp;   &amp;   &amp;   \\
+  F&amp;  &amp;   &amp;   &amp;   &amp; 4 &amp;   &amp;   \\
+  G&amp;  &amp;   &amp;   &amp;   &amp;   &amp;   &amp; 1 \\ \hline
+\end{array}
+\end{align*}</div><p>where we choose to represent the cost of the optimal assignment in the
+rows and columns of the resulting matching. As it can be seen, 5 out
+of the 7 workers obtain their preferred choice, one the second one and  one receives the
+fourth choice. Had we proceeded in a myopic, priority-based, way
+assigning the first available choice to A, then to B, and so on, we
+would have obtained a non optimal assignment:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\begin{array}{l|ccccccc}
+   &amp; \multicolumn{7}{c}{Shifts} \\
+  &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5 &amp; 6 &amp; 7 \\ \hline
+  A&amp;  &amp;   &amp;   &amp;   &amp;   &amp;   &amp; 1 \\
+  B&amp;  &amp;   &amp;   &amp;   &amp;   &amp; 1 &amp;   \\
+  C&amp;1 &amp;   &amp;   &amp;   &amp;   &amp;   &amp;   \\
+  D&amp;  &amp; 1 &amp;   &amp;   &amp;   &amp;   &amp;   \\
+  E&amp;  &amp;   &amp;   &amp; 1 &amp;   &amp;   &amp;   \\
+  F&amp;  &amp;   &amp;   &amp;   &amp; 4 &amp;   &amp;   \\
+  G&amp;  &amp;   &amp; 7  &amp;   &amp;   &amp;   &amp;   \\ \hline
+\end{array}
+\end{align*}</div><p>The solution determined with this model minimizes the sum of the
+penalties associated with each choice. This  could
+lead to quite unbalanced combinations, in which many receive the
+favorite choice against a few who get a quite bad one.
+As an example, a slightly sub-optimal solution for this example with
+the following assignments</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\begin{array}{l|ccccccc}
+   &amp; \multicolumn{7}{c}{Shifts} \\
+  &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5 &amp; 6 &amp; 7 \\ \hline
+  A&amp;  &amp;   &amp; 2  &amp;   &amp;   &amp;   &amp;   \\
+  B&amp;  &amp;   &amp;    &amp;   &amp; 3 &amp;   &amp;   \\
+  C&amp;1 &amp;   &amp;   &amp;   &amp;   &amp;   &amp;   \\
+  D&amp;  &amp; 1 &amp;   &amp;   &amp;   &amp;   &amp;   \\
+  E&amp;  &amp;   &amp;   &amp; 1 &amp;   &amp;   &amp;   \\
+  F&amp;  &amp;   &amp;   &amp;   &amp;   &amp;3  &amp;   \\
+  G&amp;  &amp;   &amp;   &amp;   &amp;   &amp;   &amp; 1 \\ \hline
+\end{array}
+\end{align*}</div><p>although the total cost becomes 12, instead of the optimal 11, the
+assignment is more fair.
+If we are looking for a fair assignment the model needs to be changed
+(and it loses the characteristics of being a network flow one).</p>
+<p>However, without changing the underlying model, a more equitable
+assignment might be found with a few tricks. A simple way
+would be to change the weights
+increasing the penalty associated with worse choices: as an
+example, the costs associated with each pair might be squared. In this
+example, squaring the penalties, a solution equivalent to the last one
+above, with sum of penalties equal to 12, would be obtained.</p>
+<p>Another possibility to avoid assigning too bad shifts to a small group
+of workers, would be to cancel the corresponding arcs. E.g., we might
+cancel all arcs whose weight is 4 or more. There is a risk of
+infeasibility, but if a feasible solution exists, it will have quite a
+fair distribution of duties.</p>
+<p>A model in which, explicitly, we would like to minimize the cost of
+the worst assignment would lead to a “minimax” model, with the objective</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\min \max_{(i, j) \in \set{Arcs}} \{\param{Cost}_{ij} \var{f}_{ij} \}
+\end{align*}</div><p>The linear formulation of minimax models is quite simple and
+will be presented in paragraph <a class="reference internal" href="Objectives.html#fair-assignment"><span class="std std-ref">Fair Assignment</span></a>; however
+the transformations necessary
+to convert the minimax model into a  linear one will destroy the
+integrality property enjoyed by pure network flow models.</p>
+<p>A simpler modification, often useful in
+these kind of applications, is connected with the need to assign more than
+one person to a shift or to a duty. It is indeed trivial to change the
+model to include different requirements for each shift. The resulting model
+becomes a  transportation one, where the source nodes  always have a
+unit balance, while destination nodes have a balance equal to the demand.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-1"></span>School bus driver assignment</p>
+<p>Consider  the problem
+of  assigning drivers to buses for the transport of
+school children; in this particular case, an assignment of
+drivers is required for two distinct working shifts, corresponding
+to the entrance and exit of children from school. It is assumed then
+that  <span class="math notranslate nohighlight">\(n\)</span> vehicles in the morning and in the afternoon have
+to be assigned.
+Different vehicles will follow different routes,
+with different duration, to collect and deliver
+children. A driver  assigned to two shifts (one in the morning,
+the other in the afternoon) will be paid  based on the overall duration
+of the two routes. In particular, it can be assumed that
+the driver’s duties correspond to a fixed salary, for working hours up
+to a duration  <span class="math notranslate nohighlight">\(D\)</span>, plus, possibly, an extra payment for
+each additional hour of driving in the same day.</p>
+<p>We can model this problem as a graph whose nodes are
+morning and  afternoon routes. It  is not
+important  which driver will drive which route, but rather how
+to match morning and afternoon  runs at the minimum total cost.</p>
+<p>Let <span class="math notranslate nohighlight">\(d_{i}\)</span> denote the estimated duration of
+route <span class="math notranslate nohighlight">\(i\)</span>:  the cost associated with an arc <span class="math notranslate nohighlight">\((i, j)\)</span> will be</p>
+<div class="math notranslate nohighlight">
+\[
+\max \{0, d_{i} + d_{j} -D \},
+\]</div><p>which represents the number of overtime hours that the company
+must pay to a driver who is assigned shift <span class="math notranslate nohighlight">\(i\)</span>  in the
+morning and  shift <span class="math notranslate nohighlight">\(j\)</span> in the afternoon. The following data file shows
+can be taken as an example:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-2-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-2-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-2-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-2-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-2-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">sc-bus.dat</span><a class="headerlink" href="#id6" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">duration</span><span class="p">{</span><span class="n">ORIGINS</span> <span class="n">union</span> <span class="n">DESTINATIONS</span><span class="p">};</span> <span class="c1"># duration of each route</span>
+<span class="n">param</span> <span class="n">D</span><span class="p">;</span>  <span class="c1"># threshold for overtime</span>
+<span class="n">data</span><span class="p">;</span>
+
+<span class="nb">set</span> <span class="n">ORIGINS</span>      <span class="o">:=</span> <span class="n">AM1</span> <span class="n">AM2</span> <span class="n">AM3</span> <span class="n">AM4</span> <span class="n">AM5</span> <span class="n">AM6</span> <span class="n">AM7</span> <span class="n">AM8</span><span class="p">;</span>
+<span class="nb">set</span> <span class="n">DESTINATIONS</span> <span class="o">:=</span> <span class="n">PM1</span> <span class="n">PM2</span> <span class="n">PM3</span> <span class="n">PM4</span> <span class="n">PM5</span> <span class="n">PM6</span> <span class="n">PM7</span> <span class="n">PM8</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">duration</span><span class="o">:=</span>
+<span class="n">AM1</span>  <span class="mi">3</span>  <span class="n">AM2</span>   <span class="mi">2</span>    <span class="n">AM3</span>  <span class="mi">3</span>   <span class="n">AM4</span>  <span class="mi">4</span>   <span class="n">AM5</span>  <span class="mi">2</span>    <span class="n">AM6</span>   <span class="mi">3</span>   <span class="n">AM7</span>  <span class="mi">3</span>  <span class="n">AM8</span> <span class="mi">2</span>
+<span class="n">PM1</span>  <span class="mi">4</span>  <span class="n">PM2</span>   <span class="mi">4</span>    <span class="n">PM3</span>  <span class="mi">3</span>   <span class="n">PM4</span>  <span class="mi">1</span>   <span class="n">PM5</span>  <span class="mi">3</span>    <span class="n">PM6</span>   <span class="mi">2</span>   <span class="n">PM7</span>  <span class="mi">2</span>  <span class="n">PM8</span> <span class="mi">2</span><span class="p">;</span>
+   
+<span class="n">param</span> <span class="n">D</span> <span class="o">:=</span> <span class="mi">5</span><span class="p">;</span>
+
+<span class="n">let</span> <span class="p">{</span><span class="n">o</span> <span class="ow">in</span> <span class="n">ORIGINS</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">DESTINATIONS</span><span class="p">}</span>
+    <span class="n">Cost</span><span class="p">[</span><span class="n">o</span><span class="p">,</span><span class="n">d</span><span class="p">]</span>  <span class="o">:=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>  <span class="n">duration</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">+</span> <span class="n">duration</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">-</span> <span class="n">D</span><span class="p">);</span> 
+
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-2-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">sc-bus.dat</span><a class="headerlink" href="#id7" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># to be done</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>Morning and afternoon routes have different durations;
+the last part of the file contains the definition of the
+overtime cost for every pair of routes. Running a linear optimization
+solver on this simple example, the following solution is obtained:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\begin{array}{ccc}
+AM &amp; PM &amp; Cost \\ \hline
+AM1 &amp; PM2  &amp; 2 \\
+AM2 &amp; PM5 &amp; 0 \\
+AM3 &amp; PM7 &amp; 0 \\
+AM4 &amp; PM4 &amp; 0 \\
+AM5 &amp; PM1 &amp; 1 \\
+AM6 &amp; PM6 &amp; 0 \\
+AM7 &amp; PM8 &amp; 0 \\
+AM8 &amp; PM3 &amp; 0 \\
+\hline
+\end{array}
+\end{align*}</div><p>with a total number of overtime hours equal to 3.
+This problem actually lends itself to a very simple solution,
+through sorting. It s in fact possible to show
+that optimal assignment can be obtained by sorting
+morning routes in non decreasing order and afternoon ones in non
+increasing order.
+An optimal pairing can then be obtained from these two lists. In the example:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\begin{array}{ccc}
+AM &amp; PM &amp; Cost \\ \hline
+AM2  &amp; PM1 &amp; 1 \\
+AM5 &amp; PM2 &amp; 1 \\
+AM8 &amp; PM3 &amp; 0 \\
+AM1 &amp; PM5 &amp; 1 \\
+AM3 &amp; PM6 &amp; 0 \\
+AM6  &amp; PM7 &amp; 0 \\
+AM7 &amp; PM8 &amp; 0 \\
+AM4 &amp; PM4 &amp; 0 \\ \hline
+\end{array}
+\end{align*}</div><p>Although different from the one obtained before, it has clearly the
+same objective function value.</p>
+</dd>
+</dl>
+<p>The application  just presented  is known in the literature under the name
+of <span class="target" id="index-2"></span>scheduling two machines in series;  in fact the problem
+corresponds to that of choosing how to sort
+parts  to be  assembled in a production line composed of two stages in
+series.</p>
+<p>It is worth also to make an observation on  applications like this
+one, where  a specialized an efficient solution algorithm is
+available.
+Of course, were we interested in just solving this problem, it would
+be useless and inefficient to rely on a general purpose optimization
+solver and to the linear modeling expression. However it is very
+frequently the case in which a similar problem is a small part of a
+much larger and complex optimization one. In this case, when the main
+variables are linked to other variables in the problem, it is no more
+possible to rely on solution algorithms which can be applied only to a
+part of the model. To make this point clear, assume that not only we
+have to pair morning with afternoon shifts, but also we need to take
+into account drivers’ preferences like, e.g., routes which they do not
+wish to cover, or bounds in the number of overtime hours they are
+willing to offer. In this case it is likely that the above problem
+would be a part of a larger one in which pairing decisions are
+influenced by assignment of pairs to workers.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-3"></span>Moving object tracking</p>
+<p>Another application of bi-partite matching corresponds to
+the determination of the direction of movement of
+objects in sequential frames. Assume that two frames, or pictures
+taken at within a short time interval one from the other, are
+available.
+The problem is to pair the two frames matching objects  in order to
+be able to track their position in time and space.
+It can be seen that this problem is indeed an assignment one, in
+which nodes of the sets in the bi-partite graph are associated to
+objects in the two frames. Arcs connect objects in two different
+frames, with the assumption that if an arc is chosen then the two
+associated objects will be paired in the two frames.
+If, as it is assumed here, the two frames have been obtained in a
+quite short time interval, it is reasonable to assume that objects
+did not move too much. So it is natural to associate to each arc a
+cost equal to the euclidean distance between points in the two frames.
+In this case we
+assume that the  objects are  moving at a speed which is low with
+respect to the frame rate. Let
+<span class="math notranslate nohighlight">\((X_i^k,Y_i^k)\)</span> be the coordinates of object <span class="math notranslate nohighlight">\(i\)</span> in
+frame <span class="math notranslate nohighlight">\(k \in \{1,2\}\)</span>. The cost associated to an arc
+between objects <span class="math notranslate nohighlight">\(i,j\)</span> can be defined as</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\var{c}_{ij} &amp; = \sqrt{(X_i^1-X_j^2)^2 + (Y_i^1-Y_j^2)^2}
+\end{align*}</div><p>and the assignment model can be employed to find the matching which
+minimizes the overall sum of euclidean displacements.</p>
+<p>As an example, consider the following picture:</p>
+<div class="figure" style="text-align: center">
+<p><img  src="_images/tikz-d4e19f4cbba500b416611c7a44293796f86a8d9e.png" alt="Figure made with TikZ" /></p>
+</div><p>which represents the first frame, and the following one:</p>
+<div class="figure" style="text-align: center">
+<p><img  src="_images/tikz-b21a58cb7392b3fbcfafa0c5e9032a4e679059d9.png" alt="Figure made with TikZ" /></p>
+</div><p>for the second one. Solving the assignment model the following
+tracking is obtained:</p>
+<div class="figure" style="text-align: center">
+<p><img  src="_images/tikz-ff8f1dfb73e1b56286461866a136a81774d2dbdd.png" alt="Figure made with TikZ" /></p>
+</div><p>This matching result was obtained by preparing a data file suitable
+for the assignment model, as it can be seen in the following
+example:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" role="tablist"><button aria-controls="panel-3-QU1QTA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-3-QU1QTA==" name="QU1QTA==" role="tab" tabindex="0">AMPL</button><button aria-controls="panel-3-SnVsaWE=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-3-SnVsaWE=" name="SnVsaWE=" role="tab" tabindex="-1">Julia</button></div><div aria-labelledby="tab-3-QU1QTA==" class="sphinx-tabs-panel group-tab" id="panel-3-QU1QTA==" name="QU1QTA==" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">tracking.dat</span><a class="headerlink" href="#id8" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="p">;</span>
+<span class="n">param</span> <span class="n">N</span><span class="p">;</span> <span class="c1"># number of points</span>
+<span class="n">param</span> <span class="n">Coordinates</span><span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">N</span><span class="p">,</span><span class="mf">1..2</span><span class="p">,</span><span class="mf">1..2</span><span class="p">};</span> <span class="c1"># X,Y coordinates for each frame</span>
+<span class="n">data</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">N</span> <span class="o">:=</span> <span class="mi">20</span><span class="p">;</span>
+
+<span class="n">param</span> <span class="n">Coordinates</span> <span class="p">[</span><span class="o">*</span><span class="p">,</span><span class="o">*</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="p">:</span>
+    <span class="mi">1</span>       <span class="mi">2</span>  <span class="o">:=</span>       
+<span class="mi">1</span>   <span class="mf">0.012</span>  <span class="mf">0.236</span> 
+<span class="mi">2</span>   <span class="mf">0.032</span>  <span class="mf">0.138</span> 
+<span class="mi">3</span>   <span class="mf">0.044</span>  <span class="mf">0.383</span>   
+<span class="mi">4</span>   <span class="mf">0.075</span>  <span class="mf">0.953</span>   
+<span class="mi">5</span>   <span class="mf">0.121</span>  <span class="mf">0.911</span>  
+<span class="mi">6</span>   <span class="mf">0.187</span>  <span class="mf">0.038</span> 
+<span class="mi">7</span>   <span class="mf">0.211</span>  <span class="mf">0.707</span>  
+<span class="mi">8</span>   <span class="mf">0.308</span>  <span class="mf">0.832</span>  
+<span class="mi">9</span>   <span class="mf">0.393</span>  <span class="mf">0.606</span>  
+<span class="mi">10</span>  <span class="mf">0.418</span>  <span class="mf">0.372</span> 
+<span class="mi">11</span>  <span class="mf">0.431</span>  <span class="mf">0.972</span>  
+<span class="mi">12</span>  <span class="mf">0.514</span>  <span class="mf">0.531</span>  
+<span class="mi">13</span>  <span class="mf">0.606</span>  <span class="mf">0.814</span>  
+<span class="mi">14</span>  <span class="mf">0.640</span>  <span class="mf">0.096</span> 
+<span class="mi">15</span>  <span class="mf">0.702</span>  <span class="mf">0.905</span>  
+<span class="mi">16</span>  <span class="mf">0.750</span>  <span class="mf">0.642</span>  
+<span class="mi">17</span>  <span class="mf">0.853</span>  <span class="mf">0.023</span> 
+<span class="mi">18</span>  <span class="mf">0.866</span>  <span class="mf">0.874</span>  
+<span class="mi">19</span>  <span class="mf">0.876</span>  <span class="mf">0.541</span>  
+<span class="mi">20</span>  <span class="mf">0.970</span>  <span class="mf">0.618</span>  
+
+<span class="p">[</span><span class="o">*</span><span class="p">,</span><span class="o">*</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="p">:</span>
+       <span class="mi">1</span>     <span class="mi">2</span>    <span class="o">:=</span>
+<span class="mi">1</span>   <span class="mf">0.034</span>   <span class="mf">0.123</span> 
+<span class="mi">2</span>   <span class="mf">0.036</span>   <span class="mf">0.392</span> 
+<span class="mi">3</span>   <span class="mf">0.077</span>   <span class="mf">0.831</span>  
+<span class="mi">4</span>   <span class="mf">0.173</span>   <span class="mf">0.055</span>
+<span class="mi">5</span>   <span class="mf">0.217</span>   <span class="mf">0.687</span>  
+<span class="mi">6</span>   <span class="mf">0.244</span>   <span class="mf">0.218</span> 
+<span class="mi">7</span>   <span class="mf">0.329</span>   <span class="mf">0.810</span>  
+<span class="mi">8</span>   <span class="mf">0.415</span>   <span class="mf">0.586</span>
+<span class="mi">9</span>   <span class="mf">0.418</span>   <span class="mf">0.381</span> 
+<span class="mi">10</span>  <span class="mf">0.453</span>   <span class="mf">0.876</span>  
+<span class="mi">11</span>  <span class="mf">0.521</span>   <span class="mf">0.544</span>  
+<span class="mi">12</span>  <span class="mf">0.621</span>   <span class="mf">0.093</span> 
+<span class="mi">13</span>  <span class="mf">0.686</span>   <span class="mf">0.824</span>  
+<span class="mi">14</span>  <span class="mf">0.741</span>   <span class="mf">0.645</span>  
+<span class="mi">15</span>  <span class="mf">0.758</span>   <span class="mf">0.611</span>  
+<span class="mi">16</span>  <span class="mf">0.783</span>   <span class="mf">0.635</span>  
+<span class="mi">17</span>  <span class="mf">0.849</span>   <span class="mf">0.902</span>   
+<span class="mi">18</span>  <span class="mf">0.860</span>   <span class="mf">0.334</span> 
+<span class="mi">19</span>  <span class="mf">0.938</span>   <span class="mf">0.811</span>  
+<span class="mi">20</span>  <span class="mf">0.973</span>   <span class="mf">0.929</span>  
+<span class="p">;</span>
+
+<span class="n">let</span> <span class="n">ORIGINS</span> <span class="o">:=</span> <span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">N</span><span class="p">};</span>
+<span class="n">let</span> <span class="n">DESTINATIONS</span> <span class="o">:=</span> <span class="p">{</span><span class="mf">1.</span><span class="o">.</span><span class="n">N</span><span class="p">};</span>
+
+<span class="n">let</span> <span class="p">{(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ARCS</span><span class="p">}</span> <span class="n">Cost</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">:=</span> <span class="n">sqrt</span><span class="p">(</span><span class="nb">sum</span><span class="p">{</span><span class="n">k</span> <span class="ow">in</span> <span class="mf">1..2</span><span class="p">}</span> <span class="p">(</span><span class="n">Coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">Coordinates</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span><span class="o">**</span><span class="mf">2.</span><span class="p">);</span>
+
+
+</pre></div>
+</div>
+</div>
+</div><div aria-labelledby="tab-3-SnVsaWE=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-3-SnVsaWE=" name="SnVsaWE=" role="tabpanel" tabindex="0"><div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">tracking.dat</span><a class="headerlink" href="#id9" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># to be done</span>
+</pre></div>
+</div>
+</div>
+</div></div>
+<p>As it can be seen, e.g., in the AMPL data file, some trick had to be
+used in order to be able to compute the cost coefficients. In a
+more advanced setting, like, e.g., in the AMPLpy python/AMPL
+interface, operations on data frames could be much more easily and
+efficiently performed. Of course different matching solutions will
+be found using a different distance function.</p>
+<p>The model just seen is based on the assumption that the number of
+objects in the two frames does not change; if this is not the case,
+simple modifications  would be needed in order to allow
+the case of objects which  are present in a frame, but absent
+in the other one.</p>
+</dd>
+</dl>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">application</dt>
+<dd class="field-odd"><p><span class="target" id="index-4"></span>Determination of the karyotype of chromosomes</p>
+<p>The <em>karyotype</em>
+is defined as a set of shape characteristics,
+size, number and properties of the chromosomes of a species. In
+humans, as an example, there are 23 pairs of  chromosomes,
+22 of which are identical while one, for the male, contain the X-Y pair.
+Each group of chromosomes has its own characteristics,
+with different biological properties. In some clinical tests
+the analysis and identification of all 46 chromosomes is required.
+This analysis is done through the identification of a set of
+characteristic parameters, such as, for example, the length,
+or the set of so-called “band features”.
+Recognition is not error-free;
+however, for each chromosome, it is possible to compute the
+probability <span class="math notranslate nohighlight">\(p_{ij}\)</span> that the <span class="math notranslate nohighlight">\(i\)</span> -th
+chromosome observed belongs to class <span class="math notranslate nohighlight">\(j\)</span>. Given this
+probability it is then possible to find the assignment which minimizes
+the expected number wrong assignments:</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\min \sum_{i = 1}^{46} \sum_{j = 1}^{23} (1-p_{ij}) \var{f}_{ij} \\
+\sum_{j = 1}^{23} \var{f}_{ij} &amp; = 1 &amp; \forall \, i &amp; = 1,46 \\
+\sum_{i = 1}^{46} \var{f}_{ij} &amp; = 2 &amp; \forall \, j &amp; = 1,23 \\
+\var{f}_{ij} &amp; \geq 0
+\end{align*}</div><p>This model is not strictly an assignment but more correctly a
+transportation one.
+The model above is for the case of a female cell, while for the male
+it should be extend to take into consideration the X-Y pair.</p>
+</dd>
+</dl>
+<p><a class="reference external" href="https://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="CreativeCommonsLicence" src="_images/Cc-by-nc-nd_icon.svg.png" /></a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Transportation.html" title="previous chapter"><span class="section-number">9. </span>The transportation model</a></li>
+      <li>Next: <a href="Dynamic.html" title="next chapter"><span class="section-number">11. </span>Dynamic flows</a></li>
+  </ul></li>
+</ul>
+</div>
+<h3><a href="index.html">Table of Contents</a></h3>
+<p class="caption"><span class="caption-text">Table of Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OptimizationModels.html">1. Preface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LinearModels.html">2. Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ProductMixProblems.html">3. Product Mix Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BlendingModels.html">4. Blending Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPeriodModels.html">5. Multi Period Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NetworkFlow.html">6. Network flow models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ShortestPath.html">7. Shortest (Minimum Cost) Path Problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MaximumFlow.html">8. Maximum Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Transportation.html">9. The transportation model</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">10. Assignment or bi-partite matching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dynamic.html">11. Dynamic flows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html">12. Objectives and constraints in optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Objectives.html#some-nonlinear-problems-that-can-be-transformed-into-linear-ones">13. Some nonlinear problems that can be transformed into linear ones</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Constraints.html">14. Constraints in linear optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StochasticOptimization.html">15. Uncertainty modeling: Stochastic optimization models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MIPModels.html">16. Mixed Integer Linear Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StructuredMIPmodels.html">17. Structured Mixed Integer Linear Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html">18. Knapsack problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#multiple-knapsack-models-bin-packing-cutting-stock">19. Multiple knapsack models, Bin Packing, Cutting Stock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#bin-packing-container-optimization">20. Bin packing -  container optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Knapsack.html#plant-location">21. Plant location</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SetCovering.html">22. Set covering, packing, partition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TravelingSalesPerson.html">23. Sequencing problems: the Traveling Salesperson Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quadratic.html">24. Quadratic Optimization Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">25. To do</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Bibliography.html">26. Bibliographic References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Version.html">27. Version history</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Assignment.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Fabio Schoen,  Creative Commons Cc-by-nc-nd.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/Assignment.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
