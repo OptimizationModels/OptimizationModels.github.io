@@ -1,0 +1,22 @@
+======
+To do
+======
+
+---------------
+Vehicle Routing
+---------------
+
+-----------
+Miscellanea
+-----------
+
+---------------------------
+Appendix: graph definitions
+---------------------------
+
+--------------------------------
+Basic Linear Optimization Theory
+--------------------------------
+
+.. include:: closing.rst
+
